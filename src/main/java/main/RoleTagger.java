@@ -1,7 +1,9 @@
 package main;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,13 +13,13 @@ import com.vaadin.annotations.Theme;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Button;
-import com.vaadin.ui.Component;
+import com.vaadin.ui.CheckBox;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
-import main.RoleListProvider.CATEGORY;
 import util.ColorUtil;
 
 @Theme("VaadinTest")
@@ -25,6 +27,7 @@ public class RoleTagger extends UI {
 
 	private static final long serialVersionUID = 5924433731101343240L;
 	private static Logger LOG = Logger.getLogger(RoleTagger.class);
+	private final TagPostions tagPositions = new TagPostions();
 
 	@Override
 	protected void init(VaadinRequest request) {
@@ -33,28 +36,52 @@ public class RoleTagger extends UI {
 		mainLayout.setMargin(true);
 		setContent(mainLayout);
 
-		final RoleListProviderInterface provider = new RoleListProvider();
+		//final RoleListProvider provider = new RoleListProviderDummy();
+		final RoleListProvider provider = new RoleListProviderFileBased();
 		provider.loadRoles();
 
-		final TextArea textArea = createTExtArea();
+		final TextArea textArea = createTextArea();
+		
+		final HorizontalLayout buttomLayout = new HorizontalLayout();
+		buttomLayout.setSpacing(true);
+		
 		final Button run = createButton();
-		final Label result = new Label("", ContentMode.HTML);
+		final CheckBox enableSimpleText = new CheckBox("Show Annotated Text");
+		enableSimpleText.setValue(false);
+		
+		buttomLayout.addComponent(run);
+		buttomLayout.addComponent(enableSimpleText);
+		
+		
+		final Label annotatedresult = new Label("", ContentMode.TEXT);
+		annotatedresult.setVisible(false);
+		final Label colorfullResult = new Label("", ContentMode.HTML);
+		final Label legend = createColorIndicator();
+		legend.setVisible(false);
+		enableSimpleText.addValueChangeListener(event -> {
+			annotatedresult.setVisible(enableSimpleText.getValue());
+		});
 
 		run.addClickListener(event -> {
-			result.setValue(annotateText(textArea.getValue(), provider.getValues()));
+			tagPositions.reset();
+			final String annotatedText = annotateText(textArea.getValue(), provider.getValues());			
+			colorfullResult.setValue(addColor(annotatedText));
+			annotatedresult.setValue(annotatedText);
+			legend.setVisible(true);
 			LOG.info("Run button clicked");
 		});
 
 		mainLayout.addComponent(textArea);
-		mainLayout.addComponent(run);
-		mainLayout.addComponent(result);
-		mainLayout.addComponent(createColorIndicator());
+		mainLayout.addComponent(buttomLayout);
+		mainLayout.addComponent(annotatedresult);
+		mainLayout.addComponent(colorfullResult);
+		mainLayout.addComponent(legend);
 	}
 
-	private Component createColorIndicator() {
+	private Label createColorIndicator() {
 		final Label result = new Label("", ContentMode.HTML);
 		final StringBuilder resultText = new StringBuilder();
-		for (Entry<CATEGORY, String> entry : ColorUtil.colorMap.entrySet()) {
+		for (Entry<Category, String> entry : ColorUtil.colorMap.entrySet()) {
 			resultText.append("<mark" + entry.getValue() + ">" + entry.getKey() + "</mark" + entry.getValue() + ">")
 					.append("<br>");
 		}
@@ -63,30 +90,38 @@ public class RoleTagger extends UI {
 
 	}
 
-	private String annotateText(String text, Map<String, CATEGORY> map) {
+	private String annotateText(String text, Map<String, Category> map) {
 		String result = new String(text);
-		final String lowerCase = text.toLowerCase();
-		for (Entry<String, CATEGORY> roleEntity : map.entrySet()) {
+		for (final Entry<String, Category> roleEntity : map.entrySet()) {
 			final String role = roleEntity.getKey().toLowerCase();
-			final CATEGORY roleCategory = roleEntity.getValue();
-			// final int startIndex = lowerCase.indexOf(role);
-			// if(startIndex>-1){
-			// System.err.println(role);
-			// final int endIndex = startIndex + role.length();
-			// final String roleInText = text.substring(startIndex, endIndex);
-			final String color = ColorUtil.colorMap.get(roleCategory) == null ? ""
-					: ColorUtil.colorMap.get(roleCategory);
-			// result = result.replace(roleInText,
-			// "<mark"+color+">"+roleInText+"</mark"+color+">");
-			// }
-
-			Pattern pattern = Pattern.compile("(?i)" + role + "\\b");
-			Matcher matcher = pattern.matcher(result);
+			final Category roleCategory = roleEntity.getValue();
+			final Pattern pattern = Pattern.compile("(?i)" + "\\b"+role + "\\b");
+			final Matcher matcher = pattern.matcher(text);
+			final Set<String> visitedRoles = new HashSet<>(); 
 			while (matcher.find()) {
-				result = result.replaceAll(matcher.group(0) + "\\b",
-						"<mark" + color + ">" + matcher.group(0) + "</mark" + color + ">");
+				final String nativeRole = matcher.group(0);
+				if(visitedRoles.contains(nativeRole)){
+					continue;
+				}
+				visitedRoles.add(nativeRole);
+				final TagPostion tp = new TagPostion(matcher.start(), matcher.end());
+				if (tagPositions.alreadyExist(tp)) {
+					continue;
+				}
+				tagPositions.add(tp);
+				final String startTag = "<" + roleCategory.name() + ">";
+				final String endTag = "</" + roleCategory.name() + ">";
+				result = result.replaceAll("\\b" + nativeRole + "\\b",
+						startTag + nativeRole + endTag);
 			}
+		}
+		return result;
+	}
 
+	private String addColor(String text) {
+		String result = new String(text);
+		for (Entry<Category, String> colorCatEnity : ColorUtil.colorMap.entrySet()) {
+			result = result.replaceAll(colorCatEnity.getKey().name(), "mark" + colorCatEnity.getValue());
 		}
 		System.err.println(result);
 		return result;
@@ -97,7 +132,7 @@ public class RoleTagger extends UI {
 		return run;
 	}
 
-	private TextArea createTExtArea() {
+	private TextArea createTextArea() {
 		final TextArea textArea = new TextArea();
 		textArea.setImmediate(true);
 		textArea.setSizeFull();

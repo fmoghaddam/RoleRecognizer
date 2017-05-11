@@ -3,7 +3,7 @@ package main;
 public class TEST {
 
 	public static void main(String[] args) {
-		final RoleListProviderInterface provider = new RoleListProvider();
+		final RoleListProvider provider = new RoleListProviderFileBased();
 		provider.loadRoles();
 		provider.print();
 	}
