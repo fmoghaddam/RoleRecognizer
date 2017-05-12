@@ -45,37 +45,61 @@ public class RoleTagger extends UI {
 		final HorizontalLayout buttomLayout = new HorizontalLayout();
 		buttomLayout.setSpacing(true);
 		
-		final Button run = createButton();
-		final CheckBox enableSimpleText = new CheckBox("Show Annotated Text");
-		enableSimpleText.setValue(false);
+		final Button annotateButton = createButton();
+		final CheckBox enableTaggedText = new CheckBox("Show Annotated Text");
+		enableTaggedText.setValue(false);
 		
-		buttomLayout.addComponent(run);
-		buttomLayout.addComponent(enableSimpleText);
+		final CheckBox enableAidaText = new CheckBox("Show Annotated Text For AIDA");
+		enableAidaText.setValue(false);
 		
+		buttomLayout.addComponent(annotateButton);
+		buttomLayout.addComponent(enableTaggedText);
+		buttomLayout.addComponent(enableAidaText);
 		
-		final Label annotatedresult = new Label("", ContentMode.TEXT);
-		annotatedresult.setVisible(false);
+		final Label annotatedResult = new Label("", ContentMode.TEXT);
+		annotatedResult.setVisible(false);
+		
+		final Label annotatedAidaResult = new Label("", ContentMode.TEXT);
+		annotatedAidaResult.setVisible(false);
+		
 		final Label colorfullResult = new Label("", ContentMode.HTML);
 		final Label legend = createColorIndicator();
 		legend.setVisible(false);
-		enableSimpleText.addValueChangeListener(event -> {
-			annotatedresult.setVisible(enableSimpleText.getValue());
+		enableTaggedText.addValueChangeListener(event -> {
+			annotatedResult.setVisible(enableTaggedText.getValue());
+		});
+		
+		enableAidaText.addValueChangeListener(event -> {
+			annotatedAidaResult.setVisible(enableAidaText.getValue());
 		});
 
-		run.addClickListener(event -> {
+		annotateButton.addClickListener(event -> {
 			tagPositions.reset();
 			final String annotatedText = annotateText(textArea.getValue(), provider.getValues());			
 			colorfullResult.setValue(addColor(annotatedText));
-			annotatedresult.setValue(annotatedText);
+			annotatedResult.setValue(annotatedText);
+			annotatedAidaResult.setValue(convertToAidaNotation(annotatedText));
 			legend.setVisible(true);
-			LOG.info("Run button clicked");
 		});
 
 		mainLayout.addComponent(textArea);
 		mainLayout.addComponent(buttomLayout);
-		mainLayout.addComponent(annotatedresult);
 		mainLayout.addComponent(colorfullResult);
 		mainLayout.addComponent(legend);
+		mainLayout.addComponent(new Label("<hr />",ContentMode.HTML));
+		mainLayout.addComponent(annotatedResult);
+		mainLayout.addComponent(new Label("<hr />",ContentMode.HTML));
+		mainLayout.addComponent(annotatedAidaResult);
+		
+	}
+
+	private String convertToAidaNotation(final String text) {
+		String result = new String(text);
+		for (Entry<Category, String> colorCatEnity : ColorUtil.colorMap.entrySet()) {
+			result = result.replaceAll("<"+colorCatEnity.getKey().name()+">", "[[");
+			result = result.replaceAll("</"+colorCatEnity.getKey().name()+">", "]]");
+		}
+		return result;
 	}
 
 	private Label createColorIndicator() {
@@ -123,7 +147,6 @@ public class RoleTagger extends UI {
 		for (Entry<Category, String> colorCatEnity : ColorUtil.colorMap.entrySet()) {
 			result = result.replaceAll(colorCatEnity.getKey().name(), "mark" + colorCatEnity.getValue());
 		}
-		System.err.println(result);
 		return result;
 	}
 
