@@ -35,6 +35,7 @@ import util.ColorUtil;
 @Theme("VaadinTest")
 public class RoleTagger extends UI {
 
+	private static final String VERIOSN = "1.1";
 	private static final long serialVersionUID = 5924433731101343240L;
 	private static Logger LOG = Logger.getLogger(RoleTagger.class);
 	private final TagPostions tagPositions = new TagPostions();
@@ -46,8 +47,8 @@ public class RoleTagger extends UI {
 		mainLayout.setMargin(true);
 		setContent(mainLayout);
 
-		final RoleListProvider provider = new RoleListProviderDummy();
-		// final RoleListProvider provider = new RoleListProviderFileBased();
+		//final RoleListProvider provider = new RoleListProviderDummy();
+		final RoleListProvider provider = new RoleListProviderFileBased();
 		provider.loadRoles();
 
 		final TextArea textArea = createTextArea();
@@ -68,12 +69,12 @@ public class RoleTagger extends UI {
 		enableAidaText.setValue(false);
 
 		final CheckBox enableChart = new CheckBox("Show Frequency Chart");
-		enableChart.setValue(true);
+		enableChart.setValue(false);
 
 		buttomLayout.addComponent(annotateButton);
+		buttomLayout.addComponent(enableChart);
 		buttomLayout.addComponent(enableTaggedText);
 		buttomLayout.addComponent(enableAidaText);
-		buttomLayout.addComponent(enableChart);
 
 		final Label annotatedResult = new Label("", ContentMode.TEXT);
 		annotatedResult.setVisible(false);
@@ -104,20 +105,23 @@ public class RoleTagger extends UI {
 			annotatedAidaResult.setValue(convertToAidaNotation(annotatedText));
 			legend.setVisible(true);
 			chart.configure(createChartConfiguration(annotatedText));
-			chart.refreshData();
-			chart.setVisible(true);
+			chart.refreshData();			
 		});
 
+		mainLayout.addComponent(new Label("<h1><Strong>Role Tagger Version "+VERIOSN+"</Strong></h1>", ContentMode.HTML));
 		mainLayout.addComponent(textArea);
 		mainLayout.addComponent(buttomLayout);
 		mainLayout.addComponent(colorfullResult);
 		mainLayout.addComponent(legend);
-		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
+		mainLayout.addComponent(new Label("<Strong>Frequency Chart:</Strong>", ContentMode.HTML));
 		mainLayout.addComponent(chart);
 		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
+		mainLayout.addComponent(new Label("<Strong>Annotated Text:</Strong>", ContentMode.HTML));
 		mainLayout.addComponent(annotatedResult);
 		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
+		mainLayout.addComponent(new Label("<Strong>Annotated Text For AIDA:</Strong>", ContentMode.HTML));	
 		mainLayout.addComponent(annotatedAidaResult);
+		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
 	}
 
 	private ChartConfig createChartConfiguration(final String annotatedText) {
@@ -126,7 +130,7 @@ public class RoleTagger extends UI {
 		config.data().labels(statistic.keySet().stream().toArray(String[]::new))
 				.addDataset(new PieDataset().label("Dataset 1")).and();
 
-		config.options().responsive(true).title().display(true).text("Frequnecy").and().animation().animateScale(true)
+		config.options().responsive(true).title().display(true).text("Frequnecy Chart").and().animation().animateScale(true)
 				.animateRotate(true).and().done();
 
 		for (final Dataset<?, ?> ds : config.data().getDatasets()) {
