@@ -28,6 +28,7 @@ public class RoleListProviderFileBased extends RoleListProvider {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		sortBasedOnLenghth(Order.DESC);
 		ColorUtil.fill(new HashSet<>(roleMap.values()));
 	}
 
