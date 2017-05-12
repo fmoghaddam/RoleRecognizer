@@ -1,14 +1,24 @@
 package main;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiFunction;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
+import com.byteowls.vaadin.chartjs.ChartJs;
+import com.byteowls.vaadin.chartjs.config.ChartConfig;
+import com.byteowls.vaadin.chartjs.config.PieChartConfig;
+import com.byteowls.vaadin.chartjs.data.Dataset;
+import com.byteowls.vaadin.chartjs.data.PieDataset;
+import com.byteowls.vaadin.chartjs.utils.ColorUtils;
 import com.vaadin.annotations.Theme;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.label.ContentMode;
@@ -36,68 +46,129 @@ public class RoleTagger extends UI {
 		mainLayout.setMargin(true);
 		setContent(mainLayout);
 
-		//final RoleListProvider provider = new RoleListProviderDummy();
-		final RoleListProvider provider = new RoleListProviderFileBased();
+		final RoleListProvider provider = new RoleListProviderDummy();
+		// final RoleListProvider provider = new RoleListProviderFileBased();
 		provider.loadRoles();
 
 		final TextArea textArea = createTextArea();
-		
+
+		final ChartJs chart = new ChartJs();
+		chart.setVisible(false);
+		chart.setJsLoggingEnabled(true);
+
 		final HorizontalLayout buttomLayout = new HorizontalLayout();
 		buttomLayout.setSpacing(true);
-		
+
 		final Button annotateButton = createButton();
+
 		final CheckBox enableTaggedText = new CheckBox("Show Annotated Text");
 		enableTaggedText.setValue(false);
-		
+
 		final CheckBox enableAidaText = new CheckBox("Show Annotated Text For AIDA");
 		enableAidaText.setValue(false);
-		
+
+		final CheckBox enableChart = new CheckBox("Show Frequency Chart");
+		enableChart.setValue(true);
+
 		buttomLayout.addComponent(annotateButton);
 		buttomLayout.addComponent(enableTaggedText);
 		buttomLayout.addComponent(enableAidaText);
-		
+		buttomLayout.addComponent(enableChart);
+
 		final Label annotatedResult = new Label("", ContentMode.TEXT);
 		annotatedResult.setVisible(false);
-		
+
 		final Label annotatedAidaResult = new Label("", ContentMode.TEXT);
 		annotatedAidaResult.setVisible(false);
-		
+
 		final Label colorfullResult = new Label("", ContentMode.HTML);
 		final Label legend = createColorIndicator();
 		legend.setVisible(false);
 		enableTaggedText.addValueChangeListener(event -> {
 			annotatedResult.setVisible(enableTaggedText.getValue());
 		});
-		
+
 		enableAidaText.addValueChangeListener(event -> {
 			annotatedAidaResult.setVisible(enableAidaText.getValue());
 		});
 
+		enableChart.addValueChangeListener(event -> {
+			chart.setVisible(enableChart.getValue());
+		});
+
 		annotateButton.addClickListener(event -> {
 			tagPositions.reset();
-			final String annotatedText = annotateText(textArea.getValue(), provider.getValues());			
+			final String annotatedText = annotateText(textArea.getValue(), provider.getValues());
 			colorfullResult.setValue(addColor(annotatedText));
 			annotatedResult.setValue(annotatedText);
 			annotatedAidaResult.setValue(convertToAidaNotation(annotatedText));
 			legend.setVisible(true);
+			chart.configure(createChartConfiguration(annotatedText));
+			chart.refreshData();
+			chart.setVisible(true);
 		});
 
 		mainLayout.addComponent(textArea);
 		mainLayout.addComponent(buttomLayout);
 		mainLayout.addComponent(colorfullResult);
 		mainLayout.addComponent(legend);
-		mainLayout.addComponent(new Label("<hr />",ContentMode.HTML));
+		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
+		mainLayout.addComponent(chart);
+		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
 		mainLayout.addComponent(annotatedResult);
-		mainLayout.addComponent(new Label("<hr />",ContentMode.HTML));
+		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
 		mainLayout.addComponent(annotatedAidaResult);
-		
+	}
+
+	private ChartConfig createChartConfiguration(final String annotatedText) {
+		final PieChartConfig config = new PieChartConfig();
+		final Map<String, Double> statistic = createStatistic(annotatedText);
+		config.data().labels(statistic.keySet().stream().toArray(String[]::new))
+				.addDataset(new PieDataset().label("Dataset 1")).and();
+
+		config.options().responsive(true).title().display(true).text("Frequnecy").and().animation().animateScale(true)
+				.animateRotate(true).and().done();
+
+		for (final Dataset<?, ?> ds : config.data().getDatasets()) {
+			PieDataset lds = (PieDataset) ds;
+			List<Double> data = new ArrayList<>();
+			List<String> colors = new ArrayList<>();
+
+			for (Entry<String, Double> entry : statistic.entrySet()) {
+				data.add(entry.getValue());
+				colors.add(ColorUtil.colorMap.get(Category.valueOf(entry.getKey())));
+			}
+
+			lds.backgroundColor(colors.toArray(new String[colors.size()]));
+			lds.dataAsList(data);
+		}
+		return config;
+	}
+
+	private Map<String, Double> createStatistic(String annotatedText) {
+		final Map<String, Double> statistic = new LinkedHashMap<>();
+		final Pattern pattern = Pattern.compile("<(\"[^\"]*\"|'[^']*'|[^'\">])*>");
+		final Matcher matcher = pattern.matcher(annotatedText);
+		int sumOfTags = 0;
+		while (matcher.find()) {
+			final String tag = matcher.group(0);
+			if (!tag.contains("/")) {
+				statistic.merge(tag.substring(1, tag.length() - 1), 1., Double::sum);
+			}
+			sumOfTags++;
+		}
+		sumOfTags /= 2;
+		for (Entry<String, Double> entry : statistic.entrySet()) {
+			statistic.put(entry.getKey(), entry.getValue() / sumOfTags);
+		}
+		return statistic;
 	}
 
 	private String convertToAidaNotation(final String text) {
 		String result = new String(text);
 		for (Entry<Category, String> colorCatEnity : ColorUtil.colorMap.entrySet()) {
-			result = result.replaceAll("<"+colorCatEnity.getKey().name()+">", "[[");
-			result = result.replaceAll("</"+colorCatEnity.getKey().name()+">", "]]");
+			result = result.replaceAll("<" + colorCatEnity.getKey().name() + ">", "[[");
+			result = result.replaceAll("</" + colorCatEnity.getKey().name() + ">", "]]");
 		}
 		return result;
 	}
@@ -119,12 +190,12 @@ public class RoleTagger extends UI {
 		for (final Entry<String, Category> roleEntity : map.entrySet()) {
 			final String role = roleEntity.getKey().toLowerCase();
 			final Category roleCategory = roleEntity.getValue();
-			final Pattern pattern = Pattern.compile("(?i)" + "\\b"+role + "\\b");
+			final Pattern pattern = Pattern.compile("(?i)" + "\\b" + role + "\\b");
 			final Matcher matcher = pattern.matcher(text);
-			final Set<String> visitedRoles = new HashSet<>(); 
+			final Set<String> visitedRoles = new HashSet<>();
 			while (matcher.find()) {
 				final String nativeRole = matcher.group(0);
-				if(visitedRoles.contains(nativeRole)){
+				if (visitedRoles.contains(nativeRole)) {
 					continue;
 				}
 				visitedRoles.add(nativeRole);
@@ -135,8 +206,7 @@ public class RoleTagger extends UI {
 				tagPositions.add(tp);
 				final String startTag = "<" + roleCategory.name() + ">";
 				final String endTag = "</" + roleCategory.name() + ">";
-				result = result.replaceAll("\\b" + nativeRole + "\\b",
-						startTag + nativeRole + endTag);
+				result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
 			}
 		}
 		return result;
