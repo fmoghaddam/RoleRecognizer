@@ -24,44 +24,46 @@ public class MapUtil {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Sort a Map by key in asscending order
 	 ** 
-	 * @param map
+	 * @param roleMap
 	 * @return a sorted map
 	 */
-	public static <K, V extends Comparable<? super V>> Map<String, V> sortByKeyAscending(Map<String, V> map) {
-		List<Map.Entry<String, V>> list = new LinkedList<Map.Entry<String, V>>(map.entrySet());
-		Collections.sort(list, new Comparator<Map.Entry<String, V>>() {
-			public int compare(Map.Entry<String, V> o1, Map.Entry<String, V> o2) {
+	public static <K, V extends Comparable<? super V>> Map<String, Set<V>> sortByKeyAscending(
+			Map<String, Set<V>> roleMap) {
+		List<Map.Entry<String, Set<V>>> list = new LinkedList<Map.Entry<String, Set<V>>>(roleMap.entrySet());
+		Collections.sort(list, new Comparator<Map.Entry<String, Set<V>>>() {
+			public int compare(Map.Entry<String, Set<V>> o1, Map.Entry<String, Set<V>> o2) {
 				return (o1.getKey().length() - o2.getKey().length());
 			}
 		});
 
-		LinkedHashMap<String, V> result = new LinkedHashMap<String, V>();
-		for (Map.Entry<String, V> entry : list) {
+		LinkedHashMap<String, Set<V>> result = new LinkedHashMap<String, Set<V>>();
+		for (Map.Entry<String, Set<V>> entry : list) {
 			result.put(entry.getKey(), entry.getValue());
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Sort a Map by key in descending order
 	 ** 
 	 * @param map
 	 * @return a sorted map
 	 */
-	public static <K, V extends Comparable<? super V>> Map<String, V> sortByKeyDescending(Map<String, V> map) {
-		List<Map.Entry<String, V>> list = new LinkedList<Map.Entry<String, V>>(map.entrySet());
-		Collections.sort(list, new Comparator<Map.Entry<String, V>>() {
-			public int compare(Map.Entry<String, V> o1, Map.Entry<String, V> o2) {
+	public static <K, V extends Comparable<? super V>> Map<String, Set<V>> sortByKeyDescending(
+			Map<String, Set<V>> map) {
+		List<Map.Entry<String, Set<V>>> list = new LinkedList<Map.Entry<String, Set<V>>>(map.entrySet());
+		Collections.sort(list, new Comparator<Map.Entry<String, Set<V>>>() {
+			public int compare(Map.Entry<String, Set<V>> o1, Map.Entry<String, Set<V>> o2) {
 				return (o2.getKey().length() - o1.getKey().length());
 			}
 		});
 
-		LinkedHashMap<String, V> result = new LinkedHashMap<String, V>();
-		for (Map.Entry<String, V> entry : list) {
+		LinkedHashMap<String, Set<V>> result = new LinkedHashMap<String, Set<V>>();
+		for (Map.Entry<String, Set<V>> entry : list) {
 			result.put(entry.getKey(), entry.getValue());
 		}
 		return result;

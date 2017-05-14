@@ -2,11 +2,15 @@ package main;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
 
 import util.MapUtil;
 
 public abstract class RoleListProvider {
-	protected Map<String, Category> roleMap = new LinkedHashMap<>();
+	private static Logger LOG = Logger.getLogger(RoleListProvider.class);
+	protected Map<String, Set<Category>> roleMap = new LinkedHashMap<>();
 
 	/**
 	 * This function should first load the roles into the map, then sort the map
@@ -18,11 +22,11 @@ public abstract class RoleListProvider {
 
 	public void print() {
 		for (String s : roleMap.keySet()) {
-			System.err.println(s);
+			LOG.info(s);
 		}
 	}
 
-	public Map<String, Category> getValues() {
+	public Map<String, Set<Category>> getValues() {
 		return roleMap;
 	}
 
