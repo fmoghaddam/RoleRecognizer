@@ -25,4 +25,9 @@ public class TagPostions {
 	public void reset() {
 		positions.clear();
 	}
+
+	@Override
+	public String toString() {
+		return "TagPostions [positions=" + positions + "]";
+	}
 }

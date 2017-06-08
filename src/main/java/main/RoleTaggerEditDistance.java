@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.byteowls.vaadin.chartjs.ChartJs;
@@ -20,10 +21,12 @@ import com.byteowls.vaadin.chartjs.data.PieDataset;
 import com.vaadin.annotations.Theme;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.label.ContentMode;
+import com.vaadin.shared.ui.slider.SliderOrientation;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.Slider;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -31,14 +34,15 @@ import com.vaadin.ui.VerticalLayout;
 import util.ColorUtil;
 
 @Theme("VaadinTest")
-public class RoleTagger extends UI {
+public class RoleTaggerEditDistance extends UI {
 
-	private static final String VERIOSN = "1.2";
+	private static final String VERIOSN = "1.3";
 	private static final long serialVersionUID = 5924433731101343240L;
 	@SuppressWarnings("unused")
-	private static Logger LOG = Logger.getLogger(RoleTagger.class);
+	private static Logger LOG = Logger.getLogger(RoleTaggerEditDistance.class);
 	private final TagPostions tagPositions = new TagPostions();
-
+	private int levensteinDistance = 0;
+	
 	/*
 	 * (non-Javadoc)
 	 * @see com.vaadin.ui.UI#init(com.vaadin.server.VaadinRequest)
@@ -50,8 +54,8 @@ public class RoleTagger extends UI {
 		mainLayout.setMargin(true);
 		setContent(mainLayout);
 
-		final RoleListProvider provider = new RoleListProviderDummy();
-		//final RoleListProvider provider = new RoleListProviderFileBased();
+		//final RoleListProvider provider = new RoleListProviderDummy();
+		final RoleListProvider provider = new RoleListProviderFileBased();
 		provider.loadRoles();
 
 		final TextArea textArea = createTextArea();
@@ -74,10 +78,23 @@ public class RoleTagger extends UI {
 		final CheckBox enableChart = new CheckBox("Show Frequency Chart");
 		enableChart.setValue(false);
 
+		final Slider levensteinSlider = new Slider("Levenstein Distance:",0, 10);
+		levensteinSlider.setOrientation(SliderOrientation.HORIZONTAL);
+		
+		final Label levenstainDistanceValue = new Label(String.valueOf(levensteinDistance));
+		
+		levensteinSlider.addValueChangeListener(event -> {
+			levensteinDistance = levensteinSlider.getValue().intValue(); 
+			levenstainDistanceValue.setValue(String.valueOf(levensteinDistance));
+		});
+		
 		buttomLayout.addComponent(annotateButton);
 		buttomLayout.addComponent(enableChart);
 		buttomLayout.addComponent(enableTaggedText);
 		buttomLayout.addComponent(enableAidaText);
+		buttomLayout.addComponent(levensteinSlider);
+		buttomLayout.addComponent(levenstainDistanceValue);
+		
 
 		final Label annotatedResult = new Label("", ContentMode.TEXT);
 		annotatedResult.setVisible(false);
@@ -190,7 +207,6 @@ public class RoleTagger extends UI {
 		}
 		result.setValue(resultText.toString());
 		return result;
-
 	}
 
 	private String annotateText(String text, Map<String, Set<Category>> map) {
@@ -198,61 +214,86 @@ public class RoleTagger extends UI {
 		for (final Entry<String, Set<Category>> roleEntity : map.entrySet()) {
 			final String role = roleEntity.getKey().toLowerCase();
 			final List<Category> roleCategory = new ArrayList<>(roleEntity.getValue());
-			final Pattern pattern = Pattern.compile("(?i)" + "\\b" + role + "\\b");
-			final Matcher matcher = pattern.matcher(text);
-			final Set<String> visitedRoles = new HashSet<>();
-			while (matcher.find()) {
-				final String nativeRole = matcher.group(0);
-				final TagPostion tp = new TagPostion(nativeRole,matcher.start(), matcher.end());
-				if (tagPositions.alreadyExist(tp)) {
-					continue;
-				}
-				if (visitedRoles.contains(nativeRole)) {
-					continue;
-				}
-				visitedRoles.add(nativeRole);
-
-				tagPositions.add(tp);
-				if (roleCategory.size() == 1) {
-					final String startTag = "<" + roleCategory.get(0).name() + ">";
-					final String endTag = "</" + roleCategory.get(0).name() + ">";
-					result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
-				} else {
-					String startTag = "";
-					String endTag = "";
-
-					final int stringLength = nativeRole.length();
-					if (roleCategory.size() > stringLength) {
-						String replaceText = "";
-						for (final Category cat : roleCategory) {
-							startTag = "<" + cat.name() + ">";
-							endTag = "</" + cat.name() + ">";
-							replaceText += startTag + nativeRole + endTag;
-						}
-						result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+			
+			final List<String> ngrams = NGrams.ngrams(role.split(" ").length, text);
+			for(String ngram:ngrams){
+				//final Pattern pattern = Pattern.compile("(?i)" + "\\b" + role + "\\b");
+				//final Matcher matcher = pattern.matcher(ngram);
+				final Set<String> visitedRoles = new HashSet<>();
+				if(equal(ngram,role,levensteinDistance)){
+				//while (matcher.find()) {
+					//final String nativeRole = matcher.group(0);
+					final String nativeRole = ngram;
+					
+					
+					if (visitedRoles.contains(nativeRole)) {
+						continue;
+					}
+					visitedRoles.add(nativeRole);
+					if (roleCategory.size() == 1) {
+						final String startTag = "<" + roleCategory.get(0).name() + ">";
+						final String endTag = "</" + roleCategory.get(0).name() + ">";
+						result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
 					} else {
-						String replaceText = new String(nativeRole);
-						int beginIndex = 0;
-						int endIndex = stringLength / roleCategory.size();
-						for (final Category cat : roleCategory) {
-							startTag = "<" + cat.name() + ">";
-							endTag = "</" + cat.name() + ">";
-							final String substring = nativeRole.substring(beginIndex, endIndex);
-							replaceText = replaceText.replace(substring, startTag + substring + endTag);
-							beginIndex = endIndex;
-							endIndex = endIndex + endIndex;
-							final int offset = nativeRole.length() - endIndex;
-							if (offset < stringLength / roleCategory.size()) {
-								endIndex += offset;
-							}
+						String startTag = "";
+						String endTag = "";
 
+						final int stringLength = nativeRole.length();
+						if (roleCategory.size() > stringLength) {
+							String replaceText = "";
+							for (final Category cat : roleCategory) {
+								startTag = "<" + cat.name() + ">";
+								endTag = "</" + cat.name() + ">";
+								replaceText += startTag + nativeRole + endTag;
+							}
+							result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+						} else {
+							String replaceText = new String(nativeRole);
+//							final double chunk = (stringLength*1.0) / roleCategory.size();
+//							final int ceil = (int) Math.ceil(chunk);
+//							int extraSpace = 0;
+//							if(ceil!=chunk){
+//								extraSpace = roleCategory.size()*ceil-stringLength;
+//							}
+//							String extraSpaces = "";
+//							for(int i=0;i<extraSpace;i++){
+//								extraSpaces += " ";
+//							}						
+//							nativeRole = nativeRole + extraSpaces;
+//							System.err.println("==================");
+//							System.err.println(chunk);
+//							System.err.println(ceil);
+//							System.err.println(extraSpace);
+//							System.err.println(nativeRole);
+//							System.err.println("==================");
+							int beginIndex = 0;
+							int endIndex = stringLength / roleCategory.size();
+							for (final Category cat : roleCategory) {
+//								System.err.println(beginIndex+"==="+endIndex);
+								startTag = "<" + cat.name() + ">";
+								endTag = "</" + cat.name() + ">";
+								final String substring = nativeRole.substring(beginIndex, endIndex);
+								replaceText = replaceText.replace(substring, startTag + substring + endTag);
+								beginIndex = endIndex;
+								endIndex = endIndex + stringLength / roleCategory.size();
+								final int offset = nativeRole.length() - endIndex;
+								if (offset < stringLength / roleCategory.size()) {
+									endIndex += offset;
+								}
+							}
+							result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
 						}
-						result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
 					}
 				}
-			}
+			}			
 		}
 		return result;
+	}
+
+	private boolean equal(String ngram, String role, int distance) {
+		final int levenshteinDistance = StringUtils.getLevenshteinDistance(ngram.toLowerCase(), role.toLowerCase());
+		//System.err.println(role+"=="+ngram+"=="+levenshteinDistance);
+		return levenshteinDistance<=distance;
 	}
 
 	private String addColor(String text) {

@@ -1,10 +1,12 @@
 package main;
 
 public class TagPostion {
+	private final String tag;
 	private final int startIndex;
 	private final int endIndex;
 
-	public TagPostion(int startIndex, int endIndex) {
+	public TagPostion(String tag, int startIndex, int endIndex) {
+		this.tag = tag;
 		this.startIndex = startIndex;
 		this.endIndex = endIndex;
 	}
@@ -17,9 +19,12 @@ public class TagPostion {
 		return startIndex;
 	}
 
+	public String getTag() {
+		return tag;
+	}
+
 	@Override
 	public String toString() {
-		return "TagPostion [startIndex=" + startIndex + ", endIndex=" + endIndex + "]";
+		return "TagPostion [tag=" + tag + ", startIndex=" + startIndex + ", endIndex=" + endIndex + "]";
 	}
-	
 }
