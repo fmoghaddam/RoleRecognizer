@@ -21,5 +21,11 @@ public class Precision implements Metric {
 	public String toString() {
 		return "Precision [truePositive=" + truePositive + ", falsePositive=" + falsePositive + "]";
 	}
+
+	@Override
+	public void reset() {
+		truePositive=0;
+		falsePositive=0;
+	}
 	
 }

@@ -6,6 +6,10 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.apache.commons.lang.StringUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import com.vaadin.server.SystemError;
 
@@ -29,19 +33,29 @@ public class TEST {
 //		while(tokenizer.hasMoreTokens()) {
 //		    System.out.println(tokenizer.nextToken());
 //		}
-		final Map<String,String> map = function();
-		map.put("farshad", "rima");
-		
-		final Map<String,String> map2 = (Map<String, String>) ((HashMap<String, String>)map).clone();
-		
-		System.err.println(map.entrySet());
+//		final Map<String,String> map = function();
+//		map.put("farshad", "rima");
+//		
+//		final Map<String,String> map2 = (Map<String, String>) ((HashMap<String, String>)map).clone();
+//		
+//		System.err.println(map.entrySet());
+//		//System.err.println(map2.entrySet());
+//		
+//		map2.put("farshad", "XXX");
+//		
+//		System.err.println(map.entrySet());
 		//System.err.println(map2.entrySet());
 		
-		map2.put("farshad", "XXX");
 		
-		System.err.println(map.entrySet());
-		//System.err.println(map2.entrySet());
-		
+		String html = "<PERSON>Barack Obama</PERSON> went to <MISC>German</MISC> president in <LOCATION>Germany</LOCATION>";
+				Document doc = Jsoup.parse(html);
+				Elements links = doc.select("PERSON");
+				for (Element element : links) {
+					System.err.println(element.className());
+					System.err.println(element.html());
+					System.err.println(element.nodeName());
+				}
+				Elements head = doc.select("MISC");
 		
 		
 	}

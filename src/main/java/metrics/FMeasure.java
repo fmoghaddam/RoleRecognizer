@@ -17,4 +17,8 @@ public class FMeasure implements Metric {
 	public String toString() {
 		return "FMeasure [value1=" + value1 + ", value2=" + value2 + "]";
 	}
+
+	@Override
+	public void reset() {
+	}
 }

@@ -18,6 +18,7 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.24'
     compile group: 'log4j', name: 'log4j', version: '1.2.17'
     testCompile 'junit:junit:4.12'
+	compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', version: '3.7.0'
 }
 
 task wrapper(type: Wrapper) {

@@ -21,5 +21,9 @@ public class Recall implements Metric {
 		return "Recall [truePositive=" + truePositive + ", falseNegative=" + falseNegative + "]";
 	}
 	
-	
+	@Override
+	public void reset() {
+		truePositive=0;
+		falseNegative=0;
+	}
 }
