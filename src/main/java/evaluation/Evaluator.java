@@ -1,14 +1,14 @@
 package evaluation;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,13 +18,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import edu.stanford.nlp.ie.AbstractSequenceClassifier;
 import edu.stanford.nlp.ie.NERClassifierCombiner;
-import edu.stanford.nlp.ie.crf.CRFClassifier;
-import edu.stanford.nlp.ling.CoreLabel;
-
-import java.util.Set;
-
 import main.Category;
 import main.RoleListProvider;
 import main.RoleListProviderFileBased;
@@ -41,18 +35,30 @@ public class Evaluator {
 
 	final RoleListProvider roleProvider;
 	final GroundTruchProvider groundTruthProvider;
-	final Set<String> originalDictionary;
 
-	final Map<String, Set<String>> nerDictionary;
+	final Map<String, Set<Category>> nerDictionary;
+	final Map<String, Set<String>> nerDictionaryStatistic;
 
-	public Evaluator() {
+	/**
+	 * NER Models
+	 */
+	final String model1 = "nermodel/english.all.3class.distsim.crf.ser.gz";
+	final String model2 = "nermodel/english.conll.4class.distsim.crf.ser.gz";
+	final String model3 = "nermodel/english.muc.7class.distsim.crf.ser.gz";
+	final NERClassifierCombiner classifier;
+
+	public Evaluator() throws IOException {
+
+		classifier = new NERClassifierCombiner(model1, model2, model3);
+
 		precision = new Precision();
 		recall = new Recall();
 
-		groundTruthProvider = new GroundTruthProviderDummy();
+		groundTruthProvider = new GroundTruthProviderFileBased();
 		roleProvider = new RoleListProviderFileBased();
-		originalDictionary = roleProvider.getValues().keySet();
+
 		nerDictionary = new LinkedHashMap<>();
+		nerDictionaryStatistic = new LinkedHashMap<>();
 
 		// roleProvider = new RoleListProviderDummy();
 		roleProvider.loadRoles();
@@ -96,10 +102,11 @@ public class Evaluator {
 				}
 			}
 		}
-
+		LOG.info("containEvaluationWithOriginalDictionary");
 		LOG.info("Precision= " + precision.getValue());
 		LOG.info("Recall= " + recall.getValue());
 		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
 	}
 
 	public void exactMatchEvaluationWithOriginalDictionary() {
@@ -119,10 +126,12 @@ public class Evaluator {
 				}
 			}
 		}
-
+		
+		LOG.info("exactMatchEvaluationWithOriginalDictionary");
 		LOG.info("Precision= " + precision.getValue());
 		LOG.info("Recall= " + recall.getValue());
 		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
 	}
 
 	private static boolean hasIntersection(Set<Category> set1, Set<Category> set2) {
@@ -136,37 +145,79 @@ public class Evaluator {
 
 	public void evaluationWithNERDictionary() {
 		resetMetrics();
-		final List<String> NERDictionary = createNERDictionary(originalDictionary);
+		final List<String> nerTaggedStrings = runNERTagger(roleProvider.getValues().keySet());
+		final String[] nerTaggedStringsArray = nerTaggedStrings.toArray(new String[nerTaggedStrings.size()]);
+
+		int i=0;
+		for (String fromOriginalDict : roleProvider.getValues().keySet()) {
+			final String nerTaggedResultReplaced = replaceWordsWithTags(nerTaggedStringsArray[i++], fromOriginalDict);
+			addToNERDictionary(nerTaggedResultReplaced, fromOriginalDict);
+		}
+
+
+		for (Entry<String, Set<Category>> entry : groundTruthProvider.getData().entrySet()) {
+			final String candidateText = entry.getKey();
+			final List<String> convretedToNERText = runNERTagger(new HashSet<String>(Arrays.asList(candidateText)));
+			final String replaceWordsWithTags = replaceWordsWithTags(convretedToNERText.get(0),candidateText).toLowerCase();
+			final Set<Category> categories = nerDictionary.get(replaceWordsWithTags);
+			if (categories == null) {
+				recall.addFalseNegative();
+			} else {
+				final Set<Category> newSet = new HashSet<>(categories);
+				final boolean hasIntesection = hasIntersection(newSet, entry.getValue());
+				if (hasIntesection) {
+					precision.addTruePositive();
+					recall.addTruePositive();
+				} else {
+					precision.addFalsePositive();
+				}
+			}
+		}
+
+		LOG.info("evaluationWithNERDictionary");
+		LOG.info("Precision= " + precision.getValue());
+		LOG.info("Recall= " + recall.getValue());
+		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
+
+
 	}
 
-	private List<String> createNERDictionary(Set<String> originalDictionary) {
-		final String model1 = "nermodel/english.all.3class.distsim.crf.ser.gz";
-		final String model2 = "nermodel/english.conll.4class.distsim.crf.ser.gz";
-		final String model3 = "nermodel/english.muc.7class.distsim.crf.ser.gz";
-		try {
-			NERClassifierCombiner classifier = new NERClassifierCombiner(model1, model2, model3);
+	private List<String> runNERTagger(Set<String> originalDictionary) {
+		final List<String> result = new ArrayList<>();
+		try {			
 			for (String fromOriginalDict : originalDictionary) {
 				final String nerTaggedResult = classifier.classifyWithInlineXML(fromOriginalDict);
-				addToNERDictionary(replaceWordsWithTags(nerTaggedResult, fromOriginalDict), fromOriginalDict);
+				result.add(nerTaggedResult);
 			}
-		} catch (ClassCastException | IOException e) {
+		} catch (ClassCastException  e) {
 			e.printStackTrace();
 		}
 
-		return null;
+		return result;
 	}
 
-	private void addToNERDictionary(String text, String originalText) {
-		final Set<String> freqSet = nerDictionary.get(text);
+	private void addToNERDictionary(final String tagedText,final String originalText) {
+		final Set<Category> categorySet = roleProvider.getValues().get(originalText);
+		final Set<String> freqSet = nerDictionaryStatistic.get(tagedText);
 		if (freqSet == null) {
 			final Set<String> set = new HashSet<>();
 			set.add(originalText);
-			nerDictionary.put(text, set);
+			nerDictionary.put(tagedText.toLowerCase(), categorySet);
+			nerDictionaryStatistic.put(tagedText, set);
 		} else {
-			freqSet.add(originalText);
-			nerDictionary.put(text, freqSet);
-		}
+			freqSet.add(originalText);			
+			nerDictionaryStatistic.put(tagedText, freqSet);
 
+			Set<Category> set = nerDictionary.get(tagedText);
+			if(set==null){
+				nerDictionary.put(tagedText.toLowerCase(), categorySet);
+			}else{
+				final Set<Category> newSet = new HashSet<>(categorySet);
+				newSet.addAll(set);
+				nerDictionary.put(tagedText.toLowerCase(), newSet);
+			}
+		}
 	}
 
 	private String replaceWordsWithTags(String nerTaggedResult, String originalText) {

@@ -14,7 +14,7 @@ public class GroundTruthProviderDummy extends GroundTruchProvider {
 
 	@Override
 	public void loadDate() {
-		final String dummyData = "I am <PRESIDENT>president</PRESIDENT|Barack_Obama> of the<CEO>co-founder</CEO> US <PRESIDENT>co-founder</PRESIDENT>"; 
+		final String dummyData = "I am <PRESIDENT>president</PRESIDENT|Barack_Obama> of the<CEO>co-founder</CEO> US."; 
 		data.putAll(extractInformation(dummyData));
 	}
 
