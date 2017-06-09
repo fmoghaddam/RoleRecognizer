@@ -19,6 +19,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import edu.stanford.nlp.ie.AbstractSequenceClassifier;
+import edu.stanford.nlp.ie.NERClassifierCombiner;
 import edu.stanford.nlp.ie.crf.CRFClassifier;
 import edu.stanford.nlp.ling.CoreLabel;
 
@@ -136,22 +137,19 @@ public class Evaluator {
 	public void evaluationWithNERDictionary() {
 		resetMetrics();
 		final List<String> NERDictionary = createNERDictionary(originalDictionary);
-		System.err.println(originalDictionary.size());
-		System.err.println(nerDictionary.size());
-		System.err.println(nerDictionary);
 	}
 
 	private List<String> createNERDictionary(Set<String> originalDictionary) {
-		final String model = "nermodel/english.muc.7class.distsim.crf.ser.gz";
-		final AbstractSequenceClassifier<CoreLabel> classifier;
-
+		final String model1 = "nermodel/english.all.3class.distsim.crf.ser.gz";
+		final String model2 = "nermodel/english.conll.4class.distsim.crf.ser.gz";
+		final String model3 = "nermodel/english.muc.7class.distsim.crf.ser.gz";
 		try {
-			classifier = CRFClassifier.getClassifier(model);
+			NERClassifierCombiner classifier = new NERClassifierCombiner(model1, model2, model3);
 			for (String fromOriginalDict : originalDictionary) {
 				final String nerTaggedResult = classifier.classifyWithInlineXML(fromOriginalDict);
 				addToNERDictionary(replaceWordsWithTags(nerTaggedResult, fromOriginalDict), fromOriginalDict);
 			}
-		} catch (ClassCastException | ClassNotFoundException | IOException e) {
+		} catch (ClassCastException | IOException e) {
 			e.printStackTrace();
 		}
 
@@ -191,7 +189,8 @@ public class Evaluator {
 	}
 
 	enum NER_TAG {
-		PERSON("PERSON"), LOCATION("LOCATION"), ORGANIZATION("ORGANIZATION"), MISC("MISC");
+		PERSON("PERSON"), LOCATION("LOCATION"), ORGANIZATION("ORGANIZATION"), MISC("MISC"), ORDINAL("ORDINAL"), MONEY(
+				"MONEY"), NUMBER("NUMBER"), DATE("DATE"), PERCENT("PERCENT"), TIME("TIME");
 
 		private String text;
 
