@@ -10,7 +10,7 @@ public class FMeasure implements Metric {
 	}
 
 	public double getValue(){
-		return (2*value1*value2)/(value1+value2);
+		return Double.isNaN((2*value1*value2)/(value1+value2))?0.0:(2*value1*value2)/(value1+value2);
 	}
 
 	@Override

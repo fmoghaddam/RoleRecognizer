@@ -1,10 +1,7 @@
 package evaluation;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -13,12 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
-import edu.stanford.nlp.ie.NERClassifierCombiner;
 import main.Category;
 import main.RoleListProvider;
 import main.RoleListProviderFileBased;
@@ -36,29 +28,13 @@ public class Evaluator {
 	final RoleListProvider roleProvider;
 	final GroundTruchProvider groundTruthProvider;
 
-	final Map<String, Set<Category>> nerDictionary;
-	final Map<String, Set<String>> nerDictionaryStatistic;
-
-	/**
-	 * NER Models
-	 */
-	final String model1 = "nermodel/english.all.3class.distsim.crf.ser.gz";
-	final String model2 = "nermodel/english.conll.4class.distsim.crf.ser.gz";
-	final String model3 = "nermodel/english.muc.7class.distsim.crf.ser.gz";
-	final NERClassifierCombiner classifier;
-
 	public Evaluator() throws IOException {
-
-		classifier = new NERClassifierCombiner(model1, model2, model3);
 
 		precision = new Precision();
 		recall = new Recall();
 
 		groundTruthProvider = new GroundTruthProviderFileBased();
 		roleProvider = new RoleListProviderFileBased();
-
-		nerDictionary = new LinkedHashMap<>();
-		nerDictionaryStatistic = new LinkedHashMap<>();
 
 		// roleProvider = new RoleListProviderDummy();
 		roleProvider.loadRoles();
@@ -71,37 +47,39 @@ public class Evaluator {
 	 */
 	public void containEvaluationWithOriginalDictionary() {
 		resetMetrics();
-		for (Entry<String, Set<Category>> entry : groundTruthProvider.getData().entrySet()) {
-			final String groundTruthRole = entry.getKey();
-			final Set<Category> categories = roleProvider.getValues().get(groundTruthRole);
-			if (categories != null) {
-				final Set<Category> newSet = new HashSet<>(categories);
-				final Set<Category> groundTruthCategories = entry.getValue();
-				final boolean hasIntesection = hasIntersection(newSet, groundTruthCategories);
-				if (hasIntesection) {
-					precision.addTruePositive();
-					recall.addTruePositive();
-				} else {
-					precision.addFalsePositive();
-				}
-			} else {
-				final Set<String> allRoles = roleProvider.getValues().keySet();
-				boolean found = false;
-				for (String role : allRoles) {
-					final Pattern pattern = Pattern.compile("(?i)" + "\\b" + groundTruthRole + "\\b");
-					final Matcher matcher = pattern.matcher(role);
-					if (matcher.find()) {
-						precision.addTruePositive();
-						recall.addTruePositive();
-						found = true;
-						break;
+		for(GroundTruthFile groundTruthFile:groundTruthProvider.getData()){
+			for(Entry<Category, List<Tuple<String, String>>> entry:groundTruthFile.getData().entrySet()){
+				final Category category = entry.getKey();
+				for(Tuple<String,String> tuple: entry.getValue()){
+					final String candicateText = tuple.key;
+					final Set<Category> categories = roleProvider.getData().get(candicateText);
+					if (categories != null) {
+						if(categories.contains(category)){
+							precision.addTruePositive();
+							recall.addTruePositive();
+						}else{
+							precision.addFalsePositive();
+						}
+					} else {
+						final Set<String> allRoles = roleProvider.getData().keySet();
+						boolean found = false;
+						for (String role : allRoles) {
+							final Pattern pattern = Pattern.compile("(?i)" + "\\b" + candicateText + "\\b");
+							final Matcher matcher = pattern.matcher(role);
+							if (matcher.find()) {
+								precision.addTruePositive();
+								recall.addTruePositive();
+								found = true;
+								break;
+							}
+						}
+						if (!found) {
+							recall.addFalseNegative();
+						}
 					}
 				}
-				if (!found) {
-					recall.addFalseNegative();
-				}
 			}
-		}
+		}		
 		LOG.info("containEvaluationWithOriginalDictionary");
 		LOG.info("Precision= " + precision.getValue());
 		LOG.info("Recall= " + recall.getValue());
@@ -111,22 +89,26 @@ public class Evaluator {
 
 	public void exactMatchEvaluationWithOriginalDictionary() {
 		resetMetrics();
-		for (Entry<String, Set<Category>> entry : groundTruthProvider.getData().entrySet()) {
-			final Set<Category> categories = roleProvider.getValues().get(entry.getKey());
-			if (categories == null) {
-				recall.addFalseNegative();
-			} else {
-				final Set<Category> newSet = new HashSet<>(categories);
-				final boolean hasIntesection = hasIntersection(newSet, entry.getValue());
-				if (hasIntesection) {
-					precision.addTruePositive();
-					recall.addTruePositive();
-				} else {
-					precision.addFalsePositive();
+		for(GroundTruthFile groundTruthFile:groundTruthProvider.getData()){
+			for(Entry<Category, List<Tuple<String, String>>> entry:groundTruthFile.getData().entrySet()){
+				final Category category = entry.getKey();
+				for(Tuple<String,String> tuple: entry.getValue()){
+					final String candicateText = tuple.key;
+					final Set<Category> categories = roleProvider.getData().get(candicateText);
+					if (categories == null) {
+						recall.addFalseNegative();
+					} else {
+						final boolean hasIntesection = categories.contains(category);
+						if (hasIntesection) {
+							precision.addTruePositive();
+							recall.addTruePositive();
+						} else {
+							precision.addFalsePositive();
+						}
+					}
 				}
 			}
 		}
-		
 		LOG.info("exactMatchEvaluationWithOriginalDictionary");
 		LOG.info("Precision= " + precision.getValue());
 		LOG.info("Recall= " + recall.getValue());
@@ -134,42 +116,33 @@ public class Evaluator {
 		LOG.info("--------------------------------------------");
 	}
 
-	private static boolean hasIntersection(Set<Category> set1, Set<Category> set2) {
-		for (Category cat : set1) {
-			if (set2.contains(cat)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	public void evaluationWithNERDictionary() {
 		resetMetrics();
-		final List<String> nerTaggedStrings = runNERTagger(roleProvider.getValues().keySet());
-		final String[] nerTaggedStringsArray = nerTaggedStrings.toArray(new String[nerTaggedStrings.size()]);
 
-		int i=0;
-		for (String fromOriginalDict : roleProvider.getValues().keySet()) {
-			final String nerTaggedResultReplaced = replaceWordsWithTags(nerTaggedStringsArray[i++], fromOriginalDict);
-			addToNERDictionary(nerTaggedResultReplaced, fromOriginalDict);
-		}
+		final Map<String, Set<Category>> generateNERDictionary = NERTagger.generateDictionary(roleProvider.getData());
 
+		for(GroundTruthFile groundTruthFile:groundTruthProvider.getData()){
+			for(Entry<Category, List<Tuple<String, String>>> entry:groundTruthFile.getData().entrySet()){
+				final Category category = entry.getKey();
+				for(Tuple<String,String> tuple: entry.getValue()){
+					final String candidateText = tuple.key;
+					final String convretedToNERText = NERTagger.runTagger(candidateText);
+					final String replaceWordsWithTags = NERTagger.replaceWordsWithTags(convretedToNERText,candidateText).toLowerCase();
 
-		for (Entry<String, Set<Category>> entry : groundTruthProvider.getData().entrySet()) {
-			final String candidateText = entry.getKey();
-			final List<String> convretedToNERText = runNERTagger(new HashSet<String>(Arrays.asList(candidateText)));
-			final String replaceWordsWithTags = replaceWordsWithTags(convretedToNERText.get(0),candidateText).toLowerCase();
-			final Set<Category> categories = nerDictionary.get(replaceWordsWithTags);
-			if (categories == null) {
-				recall.addFalseNegative();
-			} else {
-				final Set<Category> newSet = new HashSet<>(categories);
-				final boolean hasIntesection = hasIntersection(newSet, entry.getValue());
-				if (hasIntesection) {
-					precision.addTruePositive();
-					recall.addTruePositive();
-				} else {
-					precision.addFalsePositive();
+					final Set<Category> categories = generateNERDictionary.get(replaceWordsWithTags);
+					if (categories == null) {
+						recall.addFalseNegative();
+					} else {
+						final Set<Category> newSet = new HashSet<>(categories);
+						final boolean hasIntesection = newSet.contains(category);
+						if (hasIntesection) {
+							precision.addTruePositive();
+							recall.addTruePositive();
+						} else {
+							precision.addFalsePositive();
+						}
+					}
+
 				}
 			}
 		}
@@ -179,59 +152,6 @@ public class Evaluator {
 		LOG.info("Recall= " + recall.getValue());
 		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
 		LOG.info("--------------------------------------------");
-
-
-	}
-
-	private List<String> runNERTagger(Set<String> originalDictionary) {
-		final List<String> result = new ArrayList<>();
-		try {			
-			for (String fromOriginalDict : originalDictionary) {
-				final String nerTaggedResult = classifier.classifyWithInlineXML(fromOriginalDict);
-				result.add(nerTaggedResult);
-			}
-		} catch (ClassCastException  e) {
-			e.printStackTrace();
-		}
-
-		return result;
-	}
-
-	private void addToNERDictionary(final String tagedText,final String originalText) {
-		final Set<Category> categorySet = roleProvider.getValues().get(originalText);
-		final Set<String> freqSet = nerDictionaryStatistic.get(tagedText);
-		if (freqSet == null) {
-			final Set<String> set = new HashSet<>();
-			set.add(originalText);
-			nerDictionary.put(tagedText.toLowerCase(), categorySet);
-			nerDictionaryStatistic.put(tagedText, set);
-		} else {
-			freqSet.add(originalText);			
-			nerDictionaryStatistic.put(tagedText, freqSet);
-
-			Set<Category> set = nerDictionary.get(tagedText);
-			if(set==null){
-				nerDictionary.put(tagedText.toLowerCase(), categorySet);
-			}else{
-				final Set<Category> newSet = new HashSet<>(categorySet);
-				newSet.addAll(set);
-				nerDictionary.put(tagedText.toLowerCase(), newSet);
-			}
-		}
-	}
-
-	private String replaceWordsWithTags(String nerTaggedResult, String originalText) {
-		String result = new String(originalText);
-		final Document doc = Jsoup.parse(nerTaggedResult);
-
-		for (final NER_TAG tag : NER_TAG.values()) {
-			final Elements possibleCandidates = doc.select(tag.text);
-			for (Element element : possibleCandidates) {
-				result = result.replaceAll(element.html(), element.nodeName().toUpperCase());
-			}
-		}
-
-		return result;
 	}
 
 	private void resetMetrics() {
@@ -239,15 +159,82 @@ public class Evaluator {
 		recall.reset();
 	}
 
-	enum NER_TAG {
-		PERSON("PERSON"), LOCATION("LOCATION"), ORGANIZATION("ORGANIZATION"), MISC("MISC"), ORDINAL("ORDINAL"), MONEY(
-				"MONEY"), NUMBER("NUMBER"), DATE("DATE"), PERCENT("PERCENT"), TIME("TIME");
+	public void evaluationWithPOSAndNERDictionary() {
+		resetMetrics();
 
-		private String text;
+		final Map<String, Set<Category>> generateNERDictionary = NERTagger.generateDictionary(roleProvider.getData());
+		final Map<String, Set<Category>> generatePOSDictionary = POSTagger.generatePOSAndNERDictionary(generateNERDictionary);
 
-		NER_TAG(String text) {
-			this.text = text;
+		for(GroundTruthFile groundTruthFile:groundTruthProvider.getData()){
+			for(Entry<Category, List<Tuple<String, String>>> entry:groundTruthFile.getData().entrySet()){
+				final Category category = entry.getKey();
+				for(Tuple<String,String> tuple: entry.getValue()){
+					final String candidateText = tuple.key;
+					final String convretedToNERText = POSTagger.runPOSTaggerWithNoNER(NERTagger.runTagger(candidateText));
+					final String replaceWordsWithTags = POSTagger.replaceWordsWithTagsButNotNER(convretedToNERText,candidateText).toLowerCase();
+
+					final Set<Category> categories = generatePOSDictionary.get(replaceWordsWithTags);
+					if (categories == null) {
+						recall.addFalseNegative();
+					} else {
+						final Set<Category> newSet = new HashSet<>(categories);
+						final boolean hasIntesection = newSet.contains(category);
+						if (hasIntesection) {
+							precision.addTruePositive();
+							recall.addTruePositive();
+						} else {
+							precision.addFalsePositive();
+						}
+					}
+
+				}
+			}
 		}
+
+		LOG.info("evaluationWithPOSAndNERDictionary");
+		LOG.info("Precision= " + precision.getValue());
+		LOG.info("Recall= " + recall.getValue());
+		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
+	}
+
+	public void evaluationWithPOSDictionary() {
+		resetMetrics();
+
+		final Map<String, Set<Category>> generateNERDictionary = NERTagger.generateDictionary(roleProvider.getData());
+		final Map<String, Set<Category>> generatePOSDictionary = POSTagger.generatePOSDictionary(generateNERDictionary);
+
+		for(GroundTruthFile groundTruthFile:groundTruthProvider.getData()){
+			for(Entry<Category, List<Tuple<String, String>>> entry:groundTruthFile.getData().entrySet()){
+				final Category category = entry.getKey();
+				for(Tuple<String,String> tuple: entry.getValue()){
+					final String candidateText = tuple.key;
+					final String convretedToNERText = POSTagger.runPOSTagger(candidateText);
+					final String replaceWordsWithTags = POSTagger.replaceWordsWithTags(convretedToNERText,candidateText).toLowerCase();
+
+					final Set<Category> categories = generatePOSDictionary.get(replaceWordsWithTags);
+					if (categories == null) {
+						recall.addFalseNegative();
+					} else {
+						final Set<Category> newSet = new HashSet<>(categories);
+						final boolean hasIntesection = newSet.contains(category);
+						if (hasIntesection) {
+							precision.addTruePositive();
+							recall.addTruePositive();
+						} else {
+							precision.addFalsePositive();
+						}
+					}
+
+				}
+			}
+		}
+
+		LOG.info("evaluationWithPOSDictionary");
+		LOG.info("Precision= " + precision.getValue());
+		LOG.info("Recall= " + recall.getValue());
+		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
 	}
 
 }

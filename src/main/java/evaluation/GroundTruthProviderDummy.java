@@ -1,5 +1,6 @@
 package evaluation;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,10 +15,14 @@ public class GroundTruthProviderDummy extends GroundTruchProvider {
 
 	@Override
 	public void loadDate() {
-		final String dummyData = "I am <PRESIDENT>president</PRESIDENT|Barack_Obama> of the<CEO>co-founder</CEO> US."; 
-		data.putAll(extractInformation(dummyData));
+		final String dummyData = "I am <PRESIDENT entity=\"Barack_Obama\">president</PRESIDENT> of the<CEO entity=\"\">co-founder</CEO> US."; 
+		data.addAll(extractXmlInformation(dummyData));
 	}
 
+	private Set<GroundTruthFile> extractXmlInformation(String text){
+		return new HashSet<>(Arrays.asList(GroundTruthParser.parseText(text)));
+	}
+	
 	@Override
 	protected Map<String, Set<Category>> extractInformation(String text) {
 		final Map<String, Set<Category>> result = new LinkedHashMap<>();

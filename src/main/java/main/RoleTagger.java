@@ -102,7 +102,7 @@ public class RoleTagger extends UI {
 
 		annotateButton.addClickListener(event -> {
 			tagPositions.reset();
-			final String annotatedText = annotateText(textArea.getValue(), provider.getValues());
+			final String annotatedText = annotateText(textArea.getValue(), provider.getData());
 			colorfullResult.setValue(addColor(annotatedText));
 			annotatedResult.setValue(annotatedText);
 			annotatedAidaResult.setValue(convertToAidaNotation(annotatedText));

@@ -1,9 +1,7 @@
 package evaluation;
 
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.log4j.Logger;
 
 import java.util.Set;
@@ -12,7 +10,7 @@ import main.Category;
 
 public abstract class GroundTruchProvider {
 	private static Logger LOG = Logger.getLogger(GroundTruchProvider.class);
-	protected  Map<String, Set<Category>> data = new LinkedHashMap<>();
+	protected  Set<GroundTruthFile> data = new HashSet<>();
 	
 	protected void loadDate() {
 	
@@ -23,12 +21,12 @@ public abstract class GroundTruchProvider {
 	}
 	
 	protected void print() {
-		for(Entry<String, Set<Category>> entry: data.entrySet()){
+		for(GroundTruthFile entry: data){
 			LOG.info(entry);
 		}
 	}
 
-	public Map<String, Set<Category>> getData() {
+	public Set<GroundTruthFile> getData() {
 		return data;
 	}
 

@@ -26,7 +26,7 @@ public abstract class RoleListProvider {
 		}
 	}
 
-	public Map<String, Set<Category>> getValues() {
+	public Map<String, Set<Category>> getData() {
 		return roleMap;
 	}
 
