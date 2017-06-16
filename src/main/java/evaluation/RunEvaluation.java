@@ -8,14 +8,14 @@ public class RunEvaluation {
 
 	public static void main(String[] args) throws IOException {
 //		Evaluator eval = new Evaluator();
-//		eval.containEvaluationWithOriginalDictionary();
+		//eval.containEvaluationWithOriginalDictionary();
 //		eval.exactMatchEvaluationWithOriginalDictionary();
 //		eval.evaluationWithNERDictionary();
 //		eval.evaluationWithPOSAndNERDictionary();
 //		eval.evaluationWithPOSDictionary();
 		
 		EvaluatorFullText eval = new EvaluatorFullText();
-		
+//		
 		eval.exactMatchEvaluationWithOriginalDictionary();
 		eval.exactMatchEvaluationWithOriginalDictionaryConsdeirCategory();
 //		
@@ -27,10 +27,10 @@ public class RunEvaluation {
 		
 		eval.evaluationWithNERAndThenPOSDictionary();
 		eval.evaluationWithNERAndThenPOSDictionaryConsiderCategory();
-		
-		
-		
-		
+//		
+//		
+//		
+//		
 //		System.out.println(POSTagger.runPOSTagger2("I am an stupid guy, person"));
 //		System.out.println(POSTagger.replaceWordsWithTags(POSTagger.runPOSTagger2("I am an stupid guy, person"),"I am an stupid guy, person"));
 		

@@ -2,8 +2,10 @@ package evaluationmodified;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import evaluation.Tuple;
 import main.Category;
@@ -12,7 +14,7 @@ public class GroundTruthFileModified {
 	
 	private String time;
 	private String title;
-	private Map<String,List<Tuple<Category,String>>> data = new HashMap<>();
+	private Map<String,List<Tuple<Category,String>>> data = new LinkedHashMap<>();
 	private String fullContent;
 	
 	public String getTime() {
@@ -35,7 +37,11 @@ public class GroundTruthFileModified {
 	}
 	
 	public Map<String, List<Tuple<Category, String>>> getData() {
-		return data;
+		final Map<String,List<Tuple<Category,String>>> result = new LinkedHashMap<>();
+		for(Entry<String, List<Tuple<Category, String>>> entry:data.entrySet()){
+			result.put(entry.getKey(),new ArrayList<>(entry.getValue()));
+		}
+		return result;
 	}
 	public void setData(Map<String, List<Tuple<Category, String>>> data) {
 		this.data = data;

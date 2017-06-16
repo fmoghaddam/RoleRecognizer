@@ -2,6 +2,7 @@ package evaluation;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -44,7 +45,7 @@ public class NERTagger {
 
 	public static Map<String, Set<Category>> generateDictionary(Map<String, Set<Category>> originalDictionary){
 
-		final Map<String, Set<Category>> nerDictinary = new TreeMap<>(); 
+		final Map<String, Set<Category>> nerDictinary = new TreeMap<>(String.CASE_INSENSITIVE_ORDER); 
 
 		for(Entry<String, Set<Category>> entry:originalDictionary.entrySet()){
 			final String text = entry.getKey();
