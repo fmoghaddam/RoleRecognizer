@@ -2,8 +2,13 @@ plugins {
   id 'fi.jasoft.plugin.vaadin' version '1.0'
 }
 
+plugins {
+    id "de.undercouch.download" version "3.2.0"
+}
+
 apply plugin: 'eclipse-wtp'
 apply plugin: 'java'
+apply plugin: 'de.undercouch.download'
 
 repositories {
     jcenter()
@@ -29,4 +34,19 @@ vaadin {
     version '7.7.3'
     vaadin.logToConsole true
     debug false
+}
+
+task unzip(type: Copy,dependsOn: ':downloadFile') {
+    def zipFile = file('src/main/resources/RoleDetectorResources.rar')
+    def outputDir = file('src/main/resources/')
+ 
+    from zipTree(zipFile)
+    into outputDir
+}
+
+import de.undercouch.gradle.tasks.download.Download
+
+task downloadFile(type: Download) {
+    src 'https://dl.dropboxusercontent.com/s/1ir3me8x6u7iuwk/RoleDetectorResources.rar?dl=0'  
+    dest 'src/main/resources/RoleDetectorResources.rar'
 }
