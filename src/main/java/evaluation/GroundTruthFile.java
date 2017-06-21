@@ -52,9 +52,15 @@ public class GroundTruthFile {
 	public void setFullContent(String fullContent) {
 		this.fullContent = fullContent;
 	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
-		return "GroundTruthFile [time=" + time + ", title=" + title + ", data=" + data + "]";
+		return "GroundTruthFile [time=" + time + ", title=" + title + ", data=" + data + ", fullContent=" + fullContent
+				+ "]";
 	}
 	
 }

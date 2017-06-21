@@ -72,7 +72,7 @@ public class MapUtil {
 	/**
 	 * Sort a Map by value in ascending order
 	 ** 
-	 * @param map
+	 * @param unsortMap
 	 * @return a sorted map
 	 */
 	public static Map<Integer, Float> sortByValueAscending(final Map<Integer, Float> unsortMap) {

@@ -10,6 +10,7 @@ apply plugin: 'eclipse-wtp'
 apply plugin: 'java'
 apply plugin: 'de.undercouch.download'
 
+
 repositories {
     jcenter()
     maven {
@@ -33,7 +34,6 @@ task wrapper(type: Wrapper) {
 vaadin {
     version '7.7.3'
     vaadin.logToConsole true
-    debug false
 }
 
 task unzip(type: Copy,dependsOn: ':downloadFile') {
@@ -46,7 +46,9 @@ task unzip(type: Copy,dependsOn: ':downloadFile') {
 
 import de.undercouch.gradle.tasks.download.Download
 
-task downloadFile(type: Download) {
-    src 'https://dl.dropboxusercontent.com/s/1ir3me8x6u7iuwk/RoleDetectorResources.rar?dl=0'  
+task downloadFile(type: Download) {    
+   	src 'https://dl.dropboxusercontent.com/s/q2foq82lsuag6wq/resources.zip?dl=0'
     dest 'src/main/resources/RoleDetectorResources.rar'
+    overwrite false
+    onlyIfNewer true
 }

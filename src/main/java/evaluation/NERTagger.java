@@ -2,7 +2,6 @@ package evaluation;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -19,9 +18,9 @@ import main.Category;
 
 public class NERTagger {
 
-	final static String model1 = "nermodel/english.all.3class.distsim.crf.ser.gz";
-	final static String model2 = "nermodel/english.conll.4class.distsim.crf.ser.gz";
-	final static String model3 = "nermodel/english.muc.7class.distsim.crf.ser.gz";
+	final static String model1 = "src/main/resources/nermodel/english.all.3class.distsim.crf.ser.gz";
+	final static String model2 = "src/main/resources/nermodel/english.conll.4class.distsim.crf.ser.gz";
+	final static String model3 = "src/main/resources/nermodel/english.muc.7class.distsim.crf.ser.gz";
 	static NERClassifierCombiner classifier;
 	static {
 			try {

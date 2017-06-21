@@ -15,9 +15,9 @@ public class GroundTruthParser {
 	public static GroundTruthFile parse(String fileName){
 		try{
 			final File fXmlFile = new File(fileName);
-			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			Document doc = dBuilder.parse(fXmlFile);
+			final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			final DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			final Document doc = dBuilder.parse(fXmlFile);
 
 			doc.getDocumentElement().normalize();
 
@@ -31,7 +31,7 @@ public class GroundTruthParser {
 			groundTruthFile.setFullContent(contentNode.getTextContent());
 			groundTruthFile.setTime(timeNode.getTextContent());
 			groundTruthFile.setTitle(titleNode.getTextContent());
-
+			
 			if(contentNode.hasChildNodes()){
 				for(int i=0;i<contentNode.getChildNodes().getLength();i++){
 					final Node n = contentNode.getChildNodes().item(i);
@@ -74,9 +74,9 @@ public class GroundTruthParser {
 
 	public static GroundTruthFile parseText(String text) {
 		try{
-			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			Document doc = dBuilder.parse(text);
+			final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			final DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			final Document doc = dBuilder.parse(text);
 
 			doc.getDocumentElement().normalize();
 

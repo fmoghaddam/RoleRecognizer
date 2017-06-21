@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>RoleRecognizer</name>
-	<comment>Project RoleRecognizer created by Buildship.</comment>
+	<name>RoleTagger</name>
+	<comment>Project RoleTagger created by Buildship.</comment>
 	<projects>
 	</projects>
 	<buildSpec>
