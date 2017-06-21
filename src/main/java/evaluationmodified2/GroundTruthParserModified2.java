@@ -44,17 +44,21 @@ public class GroundTruthParserModified2 {
 			groundTruthFile.setTitle(titleNode.getTextContent());
 
 			if (contentNode.hasChildNodes()) {
+				int tagNumber = 0;
 				for (int i = 0; i < contentNode.getChildNodes().getLength(); i++) {
 					final Node roleNode = contentNode.getChildNodes().item(i);
 
 					String rolePhrase = null;
 					String headRole = null;
-					Map<String, String> attributes = new HashMap<>();
+					if(i%2!=0){
+						tagNumber++;
+					}
 					if (roleNode.getNodeType() == Node.ELEMENT_NODE) {
+						Map<String, String> attributes = new HashMap<>();
 						rolePhrase = roleNode.getTextContent();
 
 						final Tuple<Integer, Integer> positions = getStartAndEndPositions(rolePhrase,
-								contentNode.getTextContent());
+								contentNode.getTextContent(),tagNumber);
 						allPositions.add(positions);
 						if (roleNode.hasChildNodes()) {
 							for (int j = 0; j < roleNode.getChildNodes().getLength(); j++) {
@@ -83,10 +87,15 @@ public class GroundTruthParserModified2 {
 		}
 	}
 
-	private static Tuple<Integer, Integer> getStartAndEndPositions(final String rolePhrase,final String textContent) {
+	private static Tuple<Integer, Integer> getStartAndEndPositions(final String rolePhrase,final String textContent,int tagNumber) {
 		final Pattern pattern = Pattern.compile("(?)" + rolePhrase);
 		final Matcher matcher = pattern.matcher(textContent);
+		int localTagNumber = 0;
 		while (matcher.find()) {
+			localTagNumber++;
+			if(localTagNumber<tagNumber){
+				continue;
+			}
 			boolean overLapFlag = false;
 			final Tuple<Integer, Integer> candicatePosition = new Tuple<>(matcher.start(), matcher.end());
 			for (final Tuple<Integer, Integer> p : allPositions) {
@@ -131,17 +140,21 @@ public class GroundTruthParserModified2 {
 			groundTruthFile.setTitle(titleNode.getTextContent());
 
 			if (contentNode.hasChildNodes()) {
+				int tagNumber = 0;
 				for (int i = 0; i < contentNode.getChildNodes().getLength(); i++) {
 					final Node roleNode = contentNode.getChildNodes().item(i);
 
 					String rolePhrase = null;
-					String headRole = null;
-					Map<String, String> attributes = new HashMap<>();
+					String headRole = null;					
+
+					
 					if (roleNode.getNodeType() == Node.ELEMENT_NODE) {
+						tagNumber++;
+						Map<String, String> attributes = new HashMap<>();
 						rolePhrase = roleNode.getTextContent();
 
 						final Tuple<Integer, Integer> positions = getStartAndEndPositions(rolePhrase,
-								contentNode.getTextContent());
+								contentNode.getTextContent(),tagNumber);
 						allPositions.add(positions);
 						if (roleNode.hasChildNodes()) {
 							for (int j = 0; j < roleNode.getChildNodes().getLength(); j++) {
