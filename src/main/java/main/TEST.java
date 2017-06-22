@@ -1,9 +1,11 @@
 package main;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import evaluationmodified.GroundTruthProviderFileBasedModified;
+import evaluationmodifiednewstyle.EvaluatorFullTextNewStyle;
 import evaluationmodifiednewstyle.GroundTruthFileModifiedNewStyle;
 import evaluationmodifiednewstyle.GroundTruthParserModifiedNewStyle;
 import evaluationmodifiednewstyle.GroundTruthProviderFileBasedModifiedNewStyle;
@@ -86,13 +88,19 @@ public class TEST {
 //			e.printStackTrace();
 //		      }
 		
-		final GroundTruthProviderFileBasedModifiedNewStyle groundTruthProviderFileBasedModifiedNewStyle = new GroundTruthProviderFileBasedModifiedNewStyle();
-		groundTruthProviderFileBasedModifiedNewStyle.loadDate();
-		groundTruthProviderFileBasedModifiedNewStyle.getRoles().forEach(p->{
-			p.getRoles().forEach(x->{
-				System.err.println(x);
-			});
-		});
+		try {
+			final EvaluatorFullTextNewStyle evaluatorFullTextNewStyle = new EvaluatorFullTextNewStyle();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+//		final GroundTruthProviderFileBasedModifiedNewStyle groundTruthProviderFileBasedModifiedNewStyle = new GroundTruthProviderFileBasedModifiedNewStyle();
+//		groundTruthProviderFileBasedModifiedNewStyle.loadDate();
+//		groundTruthProviderFileBasedModifiedNewStyle.getRoles().forEach(p->{
+//			p.getRoles().forEach(x->{
+//				System.err.println(x);
+//			});
+//		});
 		//		final GroundTruthFileModifiedNewStyle parse = GroundTruthParserModifiedNewStyle.parse("groundTruth/NEWStyle");
 //		parse.getRoles().forEach(p->{
 //			System.err.println(p);

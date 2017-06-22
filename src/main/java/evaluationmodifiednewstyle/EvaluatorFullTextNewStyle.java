@@ -1,31 +1,18 @@
 package evaluationmodifiednewstyle;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
-import evaluation.NERTagger;
-import evaluation.POSTagger;
 import main.RoleListProvider;
 import main.RoleListProviderFileBased;
-import metrics.FMeasure;
 import metrics.Precision;
 import metrics.Recall;
 import model.Category;
-import model.TagPostion;
-import model.TagPostions;
-import util.Tuple;
 
 public class EvaluatorFullTextNewStyle {
 
@@ -45,22 +32,23 @@ public class EvaluatorFullTextNewStyle {
 		groundTruthProvider = new GroundTruthProviderFileBasedModifiedNewStyle();
 		roleProvider = new RoleListProviderFileBased();
 
-		// roleProvider = new RoleListProviderDummy();
 		roleProvider.loadRoles();
 		groundTruthProvider.loadDate();
 
 		printGroundTruthStatistics(groundTruthProvider.getRoles());
 	}
 
-	private void printGroundTruthStatistics(Set<GroundTruthFileModifiedNewStyle> groundTruthes) {
+	
+	static Map<Category,Integer> printGroundTruthStatistics(Set<GroundTruthFileModifiedNewStyle> groundTruthes) {
 		final Map<Category,Integer> statistic = new HashMap<>();
 		for(final GroundTruthFileModifiedNewStyle groundTruth: groundTruthes){
 			groundTruth.getRoles().forEach(p-> {
-				final Integer value = statistic.get(p.getXmlAttributes().get("type"));
+				final Category resolveCategory = Category.resolve(p.getXmlAttributes().get("type").toLowerCase());
+				final Integer value = statistic.get(resolveCategory);
 				if(value==null){
-					statistic.put(Category.resolve(p.getXmlAttributes().get("type")),1);
+					statistic.put(resolveCategory,1);
 				}else{
-					statistic.put(Category.resolve(p.getXmlAttributes().get("type")),value+1);
+					statistic.put(resolveCategory,value+1);
 				}
 			});
 		}
@@ -69,6 +57,8 @@ public class EvaluatorFullTextNewStyle {
 			LOG.info(entry.getKey()+"=="+entry.getValue());
 		}
 		LOG.info("-------------------------------------");
+		return statistic;
+		
 	}
 
 	/**
