@@ -11,13 +11,19 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-import main.Category;
 import main.RoleListProvider;
 import main.RoleListProviderFileBased;
 import metrics.FMeasure;
 import metrics.Precision;
 import metrics.Recall;
+import model.Category;
+import util.Tuple;
 
+/**
+ * Dictionary completeness elavator
+ * @author fbm
+ *
+ */
 public class Evaluator {
 
 	private static Logger LOG = Logger.getLogger(Evaluator.class);

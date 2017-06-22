@@ -17,16 +17,17 @@ import org.apache.log4j.Logger;
 
 import evaluation.NERTagger;
 import evaluation.POSTagger;
-import evaluation.Tuple;
-import main.Category;
 import main.RoleListProvider;
 import main.RoleListProviderFileBased;
-import main.TagPostion;
-import main.TagPostions;
 import metrics.FMeasure;
 import metrics.Precision;
 import metrics.Recall;
+import model.Category;
+import model.TagPostion;
+import model.TagPostions;
+import util.Tuple;
 
+@Deprecated
 public class EvaluatorFullText {
 
 	private static Logger LOG = Logger.getLogger(EvaluatorFullText.class);

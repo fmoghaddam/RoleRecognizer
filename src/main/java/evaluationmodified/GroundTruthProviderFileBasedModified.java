@@ -2,6 +2,7 @@ package evaluationmodified;
 
 import java.io.File;
 
+@Deprecated
 public class GroundTruthProviderFileBasedModified extends GroundTruchProviderModified {
 	private static final String DATA_FOLDER = "groundTruth";
 

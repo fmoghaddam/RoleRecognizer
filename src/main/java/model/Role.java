@@ -1,4 +1,4 @@
-package evaluationmodified2;
+package model;
 
 import java.util.HashMap;
 import java.util.Map;

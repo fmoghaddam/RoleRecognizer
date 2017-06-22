@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import model.Category;
+import model.Order;
 import util.ColorUtil;
 
 public class RoleListProviderFileBased extends RoleListProvider {

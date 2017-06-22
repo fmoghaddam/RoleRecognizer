@@ -4,9 +4,9 @@ import java.util.HashSet;
 import java.util.Map;
 import org.apache.log4j.Logger;
 
-import java.util.Set;
+import model.Category;
 
-import main.Category;
+import java.util.Set;
 
 public abstract class GroundTruchProvider {
 	private static Logger LOG = Logger.getLogger(GroundTruchProvider.class);

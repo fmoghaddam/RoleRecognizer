@@ -3,8 +3,8 @@ package main;
 import java.util.HashMap;
 import java.util.Map;
 
-import evaluationmodified2.GroundTruthFileModified2;
-import evaluationmodified2.GroundTruthParserModified2;
+import evaluationmodifiednewstyle.GroundTruthFileModifiedNewStyle;
+import evaluationmodifiednewstyle.GroundTruthParserModifiedNewStyle;
 
 public class TEST {
 
@@ -84,7 +84,7 @@ public class TEST {
 //			e.printStackTrace();
 //		      }
 		
-		final GroundTruthFileModified2 parse = GroundTruthParserModified2.parse("groundTruth/NEWStyle");
+		final GroundTruthFileModifiedNewStyle parse = GroundTruthParserModifiedNewStyle.parse("groundTruth/NEWStyle");
 		parse.getRoles().forEach(p->{
 			System.err.println(p);
 		});

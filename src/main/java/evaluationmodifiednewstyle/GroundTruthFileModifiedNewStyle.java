@@ -1,9 +1,11 @@
-package evaluationmodified2;
+package evaluationmodifiednewstyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class GroundTruthFileModified2 {
+import model.Role;
+
+public class GroundTruthFileModifiedNewStyle {
 	
 	private String time;
 	private String title;

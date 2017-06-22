@@ -5,8 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import main.Category;
+import model.Category;
+import util.Tuple;
 
+@Deprecated
 public class GroundTruthFile {
 	
 	private String time;

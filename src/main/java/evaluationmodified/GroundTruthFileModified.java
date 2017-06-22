@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import evaluation.Tuple;
-import main.Category;
+import model.Category;
+import util.Tuple;
 
+@Deprecated
 public class GroundTruthFileModified {
 	
 	private String time;

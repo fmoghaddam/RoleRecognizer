@@ -8,9 +8,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import main.Category;
-import main.TagPostion;
+import model.Category;
+import model.TagPostion;
 
+@Deprecated
 public class GroundTruthProviderDummy extends GroundTruchProvider {
 
 	@Override

@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import edu.stanford.nlp.ie.NERClassifierCombiner;
-import main.Category;
+import model.Category;
 
 public class NERTagger {
 

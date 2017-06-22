@@ -1,4 +1,4 @@
-package evaluation;
+package util;
 public class Triple<X, Y, Z> { 
 	public final X v1; 
 	public final Y v2;

@@ -6,6 +6,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import model.Category;
+import model.Order;
 import util.MapUtil;
 
 public abstract class RoleListProvider {

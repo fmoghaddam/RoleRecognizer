@@ -1,4 +1,4 @@
-package evaluation;
+package util;
 public class Tuple<X, Y> { 
 	public final X key; 
 	public final Y value; 

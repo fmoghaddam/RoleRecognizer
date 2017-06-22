@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
+import model.Category;
+import model.Order;
 import util.ColorUtil;
 
 public class RoleListProviderDummy extends RoleListProvider {

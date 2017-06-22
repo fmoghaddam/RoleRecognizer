@@ -1,10 +1,13 @@
-package evaluationmodified2;
+package evaluationmodifiednewstyle;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-public class GroundTruthParserModified2Test {
+import evaluationmodifiednewstyle.GroundTruthFileModifiedNewStyle;
+import evaluationmodifiednewstyle.GroundTruthParserModifiedNewStyle;
+
+public class GroundTruthParserModifiedNewStyleTest {
 
 	@Test
 	public void testPositionsIfEverythingIsTag() {
@@ -18,7 +21,7 @@ public class GroundTruthParserModified2Test {
 				+ "<ROLE>A <HEADROLE entity=\"\" type=\"\">Pope</HEADROLE></ROLE> "
 				+ "</CONTENT>"
 				+ "</DOCUMENT>";
-		final GroundTruthFileModified2 parseText = GroundTruthParserModified2.parseText(test);
+		final GroundTruthFileModifiedNewStyle parseText = GroundTruthParserModifiedNewStyle.parseText(test);
 		assertEquals(4,parseText.getRoles().size());
 		
 		assertEquals(0, parseText.getRoles().get(0).getStartRolePhrasePositon());
@@ -37,7 +40,7 @@ public class GroundTruthParserModified2Test {
 				+ "A Pope A Pope A Pope A Pope A Pope A Pope"
 				+ "</CONTENT>"
 				+ "</DOCUMENT>";
-		final GroundTruthFileModified2 parseText = GroundTruthParserModified2.parseText(test);
+		final GroundTruthFileModifiedNewStyle parseText = GroundTruthParserModifiedNewStyle.parseText(test);
 		assertEquals(0,parseText.getRoles().size());
 	}
 	
@@ -51,7 +54,7 @@ public class GroundTruthParserModified2Test {
 				+ "<ROLE>A <HEADROLE entity=\"\" type=\"\">Pope</HEADROLE></ROLE> "
 				+ "</CONTENT>"
 				+ "</DOCUMENT>";
-		final GroundTruthFileModified2 parseText = GroundTruthParserModified2.parseText(test);
+		final GroundTruthFileModifiedNewStyle parseText = GroundTruthParserModifiedNewStyle.parseText(test);
 		assertEquals(1,parseText.getRoles().size());
 		
 		assertEquals(9, parseText.getRoles().get(0).getStartRolePhrasePositon());
@@ -68,7 +71,7 @@ public class GroundTruthParserModified2Test {
 				+ "<ROLE>A <HEADROLE entity=\"\" type=\"\">Pope</HEADROLE></ROLE> "
 				+ "</CONTENT>"
 				+ "</DOCUMENT>";
-		final GroundTruthFileModified2 parseText = GroundTruthParserModified2.parseText(test);
+		final GroundTruthFileModifiedNewStyle parseText = GroundTruthParserModifiedNewStyle.parseText(test);
 		assertEquals(1,parseText.getRoles().size());
 		
 		assertEquals(9, parseText.getRoles().get(0).getStartRolePhrasePositon());

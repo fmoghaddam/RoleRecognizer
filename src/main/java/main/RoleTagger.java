@@ -28,6 +28,9 @@ import com.vaadin.ui.TextArea;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
+import model.Category;
+import model.TagPostion;
+import model.TagPostions;
 import util.ColorUtil;
 
 @Theme("VaadinTest")

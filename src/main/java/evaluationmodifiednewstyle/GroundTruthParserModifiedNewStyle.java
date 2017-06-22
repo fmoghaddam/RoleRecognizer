@@ -1,4 +1,4 @@
-package evaluationmodified2;
+package evaluationmodifiednewstyle;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -17,13 +17,13 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
-import evaluation.Tuple;
+import util.Tuple;
 
-public class GroundTruthParserModified2 {
+public class GroundTruthParserModifiedNewStyle {
 
 	private final static List<Tuple<Integer, Integer>> allPositions = new ArrayList<>();
 
-	public static GroundTruthFileModified2 parse(String fileName) {
+	public static GroundTruthFileModifiedNewStyle parse(String fileName) {
 		try {
 			final File fXmlFile = new File(fileName);
 			final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -32,7 +32,7 @@ public class GroundTruthParserModified2 {
 
 			doc.getDocumentElement().normalize();
 
-			final GroundTruthFileModified2 groundTruthFile = new GroundTruthFileModified2();
+			final GroundTruthFileModifiedNewStyle groundTruthFile = new GroundTruthFileModifiedNewStyle();
 
 			final Node docNode = doc.getChildNodes().item(0);
 			final Node timeNode = docNode.getChildNodes().item(1);
@@ -111,7 +111,7 @@ public class GroundTruthParserModified2 {
 		return false;
 	}
 
-	public static GroundTruthFileModified2 parseText(String text) {
+	public static GroundTruthFileModifiedNewStyle parseText(String text) {
 		try {
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -119,7 +119,7 @@ public class GroundTruthParserModified2 {
 
 			doc.getDocumentElement().normalize();
 
-			final GroundTruthFileModified2 groundTruthFile = new GroundTruthFileModified2();
+			final GroundTruthFileModifiedNewStyle groundTruthFile = new GroundTruthFileModifiedNewStyle();
 
 			final Node docNode = doc.getChildNodes().item(0);
 			final Node timeNode = docNode.getChildNodes().item(0);

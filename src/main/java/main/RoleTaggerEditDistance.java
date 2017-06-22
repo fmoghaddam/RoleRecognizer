@@ -31,7 +31,10 @@ import com.vaadin.ui.TextArea;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
+import model.Category;
+import model.TagPostions;
 import util.ColorUtil;
+import util.NGrams;
 
 @Theme("VaadinTest")
 public class RoleTaggerEditDistance extends UI {
