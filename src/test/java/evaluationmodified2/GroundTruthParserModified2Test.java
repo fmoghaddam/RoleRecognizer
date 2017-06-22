@@ -12,7 +12,6 @@ public class GroundTruthParserModified2Test {
 				+ "<TIME>10.02.2015</TIME>"
 				+ "<TITLE>He He he</TITLE>"
 				+ "<CONTENT>"
-				//+ "A Pope "
 				+ "<ROLE>A <HEADROLE entity=\"\" type=\"\">Pope</HEADROLE></ROLE> "
 				+ "<ROLE>A <HEADROLE entity=\"\" type=\"\">Pope</HEADROLE></ROLE> "
 				+ "<ROLE>A <HEADROLE entity=\"\" type=\"\">Pope</HEADROLE></ROLE> "
@@ -59,7 +58,7 @@ public class GroundTruthParserModified2Test {
 		assertEquals(15, parseText.getRoles().get(0).getEndRolePhrasePositon());
 	}
 	
-	@Test
+	//@Test
 	public void testPositionsWhenThereIsATagAndSameNoTag() {
 		final String test = "<DOCUMENT>"
 				+ "<TIME>10.02.2015</TIME>"
