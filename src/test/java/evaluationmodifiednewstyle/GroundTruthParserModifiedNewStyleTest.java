@@ -24,11 +24,11 @@ public class GroundTruthParserModifiedNewStyleTest {
 		final GroundTruthFileModifiedNewStyle parseText = GroundTruthParserModifiedNewStyle.parseText(test);
 		assertEquals(4,parseText.getRoles().size());
 		
-		assertEquals(0, parseText.getRoles().get(0).getStartRolePhrasePositon());
-		assertEquals(6, parseText.getRoles().get(0).getEndRolePhrasePositon());
+		assertEquals(0, parseText.getRoles().get(0).getRolePhasePosition().getStartIndex());
+		assertEquals(6, parseText.getRoles().get(0).getRolePhasePosition().getEndIndex());
 		
-		assertEquals(7, parseText.getRoles().get(1).getStartRolePhrasePositon());
-		assertEquals(13, parseText.getRoles().get(1).getEndRolePhrasePositon());
+		assertEquals(7, parseText.getRoles().get(1).getRolePhasePosition().getStartIndex());
+		assertEquals(13, parseText.getRoles().get(1).getRolePhasePosition().getEndIndex());
 	}
 
 	@Test
@@ -57,8 +57,8 @@ public class GroundTruthParserModifiedNewStyleTest {
 		final GroundTruthFileModifiedNewStyle parseText = GroundTruthParserModifiedNewStyle.parseText(test);
 		assertEquals(1,parseText.getRoles().size());
 		
-		assertEquals(9, parseText.getRoles().get(0).getStartRolePhrasePositon());
-		assertEquals(15, parseText.getRoles().get(0).getEndRolePhrasePositon());
+		assertEquals(9, parseText.getRoles().get(0).getRolePhasePosition().getStartIndex());
+		assertEquals(15, parseText.getRoles().get(0).getRolePhasePosition().getEndIndex());
 	}
 	
 	//@Test
@@ -74,7 +74,7 @@ public class GroundTruthParserModifiedNewStyleTest {
 		final GroundTruthFileModifiedNewStyle parseText = GroundTruthParserModifiedNewStyle.parseText(test);
 		assertEquals(1,parseText.getRoles().size());
 		
-		assertEquals(9, parseText.getRoles().get(0).getStartRolePhrasePositon());
-		assertEquals(15, parseText.getRoles().get(0).getEndRolePhrasePositon());
+		assertEquals(9, parseText.getRoles().get(0).getRolePhasePosition().getStartIndex());
+		assertEquals(15, parseText.getRoles().get(0).getRolePhasePosition().getEndIndex());
 	}
 }

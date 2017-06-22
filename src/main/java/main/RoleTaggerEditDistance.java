@@ -32,7 +32,7 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
 import model.Category;
-import model.TagPostions;
+import model.TagPositions;
 import util.ColorUtil;
 import util.NGrams;
 
@@ -43,7 +43,7 @@ public class RoleTaggerEditDistance extends UI {
 	private static final long serialVersionUID = 5924433731101343240L;
 	@SuppressWarnings("unused")
 	private static Logger LOG = Logger.getLogger(RoleTaggerEditDistance.class);
-	private final TagPostions tagPositions = new TagPostions();
+	private final TagPositions tagPositions = new TagPositions();
 	private int levensteinDistance = 0;
 	
 	/*

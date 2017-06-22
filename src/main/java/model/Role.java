@@ -7,8 +7,7 @@ public class Role {
 
 	private String rolePhrase;
 	private String headRole;
-	private int startRolePhrasePositon;
-	private int endRolePhrasePositon;
+	private Position rolePhasePosition;
 	private Map<String, String> xmlAttributes;
 	
 	public Role(String rolePhrase, String headRole, int startRolePhrasePosition, int endRolePhrasePosition,
@@ -24,8 +23,7 @@ public class Role {
 		}
 		this.rolePhrase = rolePhrase;
 		this.headRole = headRole;
-		this.startRolePhrasePositon = startRolePhrasePosition;
-		this.endRolePhrasePositon = endRolePhrasePosition;
+		rolePhasePosition = new Position(startRolePhrasePosition,endRolePhrasePosition);
 		this.xmlAttributes = new HashMap<>(xmlAttributes);
 	}
 
@@ -40,13 +38,13 @@ public class Role {
 	}
 
 
-	public int getStartRolePhrasePositon() {
-		return startRolePhrasePositon;
+	public Position getRolePhasePosition() {
+		return rolePhasePosition;
 	}
 
 
-	public int getEndRolePhrasePositon() {
-		return endRolePhrasePositon;
+	public void setRolePhasePosition(Position rolePhasePosition) {
+		this.rolePhasePosition = rolePhasePosition;
 	}
 
 
@@ -54,12 +52,10 @@ public class Role {
 		return xmlAttributes;
 	}
 
-
 	@Override
 	public String toString() {
-		return "Role [rolePhrase=" + rolePhrase + ", headRole=" + headRole + ", startRolePhrasePositon="
-				+ startRolePhrasePositon + ", endRolePhrasePositon=" + endRolePhrasePositon + ", xmlAttributes="
-				+ xmlAttributes + "]";
+		return "Role [rolePhrase=" + rolePhrase + ", headRole=" + headRole + ", rolePhasePosition=" + rolePhasePosition
+				+ ", xmlAttributes=" + xmlAttributes + "]";
 	}
 	
 }

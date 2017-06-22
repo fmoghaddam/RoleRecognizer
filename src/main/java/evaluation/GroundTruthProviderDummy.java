@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import model.Category;
-import model.TagPostion;
+import model.TagPosition;
 
 @Deprecated
 public class GroundTruthProviderDummy extends GroundTruchProvider {
@@ -29,14 +29,14 @@ public class GroundTruthProviderDummy extends GroundTruchProvider {
 		final Map<String, Set<Category>> result = new LinkedHashMap<>();
 		final Pattern pattern = Pattern.compile("(?i)<.*?>");
 		final Matcher matcher = pattern.matcher(text);
-		TagPostion tagPositionStart = new TagPostion("",0,0);
-		TagPostion tagPositionEnd = new TagPostion("",0,0);
+		TagPosition tagPositionStart = new TagPosition("",0,0);
+		TagPosition tagPositionEnd = new TagPosition("",0,0);
 		while (matcher.find()) {
 			final String tag = matcher.group(0);
 			if(!tag.contains("/")){
-				tagPositionStart = new TagPostion(tag, matcher.start(), matcher.end());
+				tagPositionStart = new TagPosition(tag, matcher.start(), matcher.end());
 			}else{
-				tagPositionEnd = new TagPostion(tag, matcher.start(), matcher.end());
+				tagPositionEnd = new TagPosition(tag, matcher.start(), matcher.end());
 				final String role = text.substring(tagPositionStart.getEndIndex(), tagPositionEnd.getStartIndex());
 				final String category = tagPositionStart.getTag().substring(1,tagPositionStart.getTag().length()-1).toLowerCase();
 				final Set<Category> set = result.get(role);

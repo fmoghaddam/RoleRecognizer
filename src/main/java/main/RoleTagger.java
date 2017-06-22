@@ -29,8 +29,8 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
 import model.Category;
-import model.TagPostion;
-import model.TagPostions;
+import model.TagPosition;
+import model.TagPositions;
 import util.ColorUtil;
 
 @Theme("VaadinTest")
@@ -40,7 +40,7 @@ public class RoleTagger extends UI {
 	private static final long serialVersionUID = 5924433731101343240L;
 	@SuppressWarnings("unused")
 	private static Logger LOG = Logger.getLogger(RoleTagger.class);
-	private final TagPostions tagPositions = new TagPostions();
+	private final TagPositions tagPositions = new TagPositions();
 
 	/*
 	 * (non-Javadoc)
@@ -206,7 +206,7 @@ public class RoleTagger extends UI {
 			final Set<String> visitedRoles = new HashSet<>();
 			while (matcher.find()) {
 				final String nativeRole = matcher.group(0);
-				final TagPostion tp = new TagPostion(nativeRole,matcher.start(), matcher.end());
+				final TagPosition tp = new TagPosition(nativeRole,matcher.start(), matcher.end());
 				if (tagPositions.alreadyExist(tp)) {
 					continue;
 				}

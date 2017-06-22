@@ -23,8 +23,8 @@ import metrics.FMeasure;
 import metrics.Precision;
 import metrics.Recall;
 import model.Category;
-import model.TagPostion;
-import model.TagPostions;
+import model.TagPosition;
+import model.TagPositions;
 import util.Tuple;
 
 @Deprecated
@@ -129,7 +129,7 @@ public class EvaluatorFullText {
 	public void exactMatchEvaluationWithOriginalDictionary() {
 		resetMetrics();
 		for (GroundTruthFileModified groundTruthFile : groundTruthProvider.getData()) {
-			final TagPostions tagPositions = new TagPostions();
+			final TagPositions tagPositions = new TagPositions();
 			final String fullText = groundTruthFile.getFullContent();
 			final Set<String> alreadyFound = new HashSet<>();
 			final Map<String, List<Tuple<Category, String>>> groundTruthFileCopy = new HashMap<>(groundTruthFile.getData());
@@ -146,7 +146,7 @@ public class EvaluatorFullText {
 
 					final String foundRoleInText = matcher.group(0);
 					
-					final TagPostion tp = new TagPostion(foundRoleInText,matcher.start(), matcher.end());
+					final TagPosition tp = new TagPosition(foundRoleInText,matcher.start(), matcher.end());
 					if (tagPositions.alreadyExist(tp)) {
 						continue;
 					}
@@ -198,7 +198,7 @@ public class EvaluatorFullText {
 		resetMetrics();
 		//final Map<Category,Integer> truePositiveStatisticForEachCategory = new HashMap<>();
 		for (GroundTruthFileModified groundTruthFile : groundTruthProvider.getData()) {
-			final TagPostions tagPositions = new TagPostions();
+			final TagPositions tagPositions = new TagPositions();
 			final String fullText = groundTruthFile.getFullContent();
 			final Set<String> alreadyFound = new HashSet<>();
 			final Map<String, List<Tuple<Category, String>>> groundTruthFileCopy = new HashMap<>(groundTruthFile.getData());
@@ -216,7 +216,7 @@ public class EvaluatorFullText {
 				while (matcher.find()) {
 					final String foundRoleInText = matcher.group(0);
 					
-					final TagPostion tp = new TagPostion(foundRoleInText,matcher.start(), matcher.end());
+					final TagPosition tp = new TagPosition(foundRoleInText,matcher.start(), matcher.end());
 					if (tagPositions.alreadyExist(tp)) {
 						continue;
 					}
@@ -307,7 +307,7 @@ public class EvaluatorFullText {
 		resetMetrics();
 		final Map<String, Set<Category>> generateNERDictionary = NERTagger.generateDictionary(roleProvider.getData());
 		for (GroundTruthFileModified groundTruthFile : groundTruthProvider.getData()) {
-			final TagPostions tagPositions = new TagPostions();
+			final TagPositions tagPositions = new TagPositions();
 			final String fullText = groundTruthFile.getFullContent();
 			final Set<String> alreadyFound = new HashSet<>();
 			final String taggedFullText = NERTagger.replaceWordsWithTags(NERTagger.runTagger(fullText), fullText);
@@ -330,7 +330,7 @@ public class EvaluatorFullText {
 				while (matcher.find()) {
 					final String foundRoleInText = matcher.group(0);
 
-					final TagPostion tp = new TagPostion(foundRoleInText,matcher.start(), matcher.end());
+					final TagPosition tp = new TagPosition(foundRoleInText,matcher.start(), matcher.end());
 					if (tagPositions.alreadyExist(tp)) {
 						continue;
 					}
@@ -382,7 +382,7 @@ public class EvaluatorFullText {
 		//final Map<Category,Integer> truePositiveStatisticForEachCategory = new HashMap<>();
 		final Map<String, Set<Category>> generateNERDictionary = NERTagger.generateDictionary(roleProvider.getData());
 		for (GroundTruthFileModified groundTruthFile : groundTruthProvider.getData()) {
-			final TagPostions tagPositions = new TagPostions();
+			final TagPositions tagPositions = new TagPositions();
 			final String fullText = groundTruthFile.getFullContent();
 			final Set<String> alreadyFound = new HashSet<>();
 			final String taggedFullText = NERTagger.replaceWordsWithTags(NERTagger.runTagger(fullText), fullText);
@@ -402,7 +402,7 @@ public class EvaluatorFullText {
 				while (matcher.find()) {
 					final String foundRoleInText = matcher.group(0);
 
-					final TagPostion tp = new TagPostion(foundRoleInText,matcher.start(), matcher.end());
+					final TagPosition tp = new TagPosition(foundRoleInText,matcher.start(), matcher.end());
 					if (tagPositions.alreadyExist(tp)) {
 						continue;
 					}
@@ -489,7 +489,7 @@ public class EvaluatorFullText {
 				.generatePOSAndNERDictionary(generateNERDictionary);
 
 		for (GroundTruthFileModified groundTruthFile : groundTruthProvider.getData()) {
-			final TagPostions tagPositions = new TagPostions();
+			final TagPositions tagPositions = new TagPositions();
 			final String fullText = groundTruthFile.getFullContent();
 			final Set<String> alreadyFound = new HashSet<>();
 
@@ -509,7 +509,7 @@ public class EvaluatorFullText {
 
 					final String foundRoleInText = matcher.group(0);
 
-					final TagPostion tp = new TagPostion(foundRoleInText,matcher.start(), matcher.end());
+					final TagPosition tp = new TagPosition(foundRoleInText,matcher.start(), matcher.end());
 					if (tagPositions.alreadyExist(tp)) {
 						continue;
 					}
@@ -586,7 +586,7 @@ public class EvaluatorFullText {
 				.generatePOSAndNERDictionary(generateNERDictionary);
 
 		for (GroundTruthFileModified groundTruthFile : groundTruthProvider.getData()) {
-			final TagPostions tagPositions = new TagPostions();
+			final TagPositions tagPositions = new TagPositions();
 			final String fullText = groundTruthFile.getFullContent();
 			final Set<String> alreadyFound = new HashSet<>();
 
@@ -611,7 +611,7 @@ public class EvaluatorFullText {
 
 					final String foundRoleInText = matcher.group(0);
 
-					final TagPostion tp = new TagPostion(foundRoleInText,matcher.start(), matcher.end());
+					final TagPosition tp = new TagPosition(foundRoleInText,matcher.start(), matcher.end());
 					if (tagPositions.alreadyExist(tp)) {
 						continue;
 					}
@@ -669,7 +669,7 @@ public class EvaluatorFullText {
 				.generatePOSAndNERDictionary(roleProvider.getData());
 
 		for (GroundTruthFileModified groundTruthFile : groundTruthProvider.getData()) {
-			final TagPostions tagPositions = new TagPostions();
+			final TagPositions tagPositions = new TagPositions();
 			final String fullText = groundTruthFile.getFullContent();
 			final Set<String> alreadyFound = new HashSet<>();
 
@@ -690,7 +690,7 @@ public class EvaluatorFullText {
 				while (matcher.find()) {
 					final String foundRoleInText = matcher.group(0);
 
-					final TagPostion tp = new TagPostion(foundRoleInText,matcher.start(), matcher.end());
+					final TagPosition tp = new TagPosition(foundRoleInText,matcher.start(), matcher.end());
 					if (tagPositions.alreadyExist(tp)) {
 						continue;
 					}
@@ -769,7 +769,7 @@ public class EvaluatorFullText {
 				.generatePOSAndNERDictionary(roleProvider.getData());
 
 		for (GroundTruthFileModified groundTruthFile : groundTruthProvider.getData()) {
-			final TagPostions tagPositions = new TagPostions();
+			final TagPositions tagPositions = new TagPositions();
 			final String fullText = groundTruthFile.getFullContent();
 			final Set<String> alreadyFound = new HashSet<>();
 
@@ -790,7 +790,7 @@ public class EvaluatorFullText {
 				while (matcher.find()) {
 					final String foundRoleInText = matcher.group(0);
 					
-					final TagPostion tp = new TagPostion(foundRoleInText,matcher.start(), matcher.end());
+					final TagPosition tp = new TagPosition(foundRoleInText,matcher.start(), matcher.end());
 					if (tagPositions.alreadyExist(tp)) {
 						continue;
 					}
