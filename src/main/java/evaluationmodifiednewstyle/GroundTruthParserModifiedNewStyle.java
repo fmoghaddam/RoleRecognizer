@@ -50,15 +50,21 @@ public class GroundTruthParserModifiedNewStyle {
 					String rolePhrase = null;
 					String headRole = null;
 					Map<String, String> attributes = new HashMap<>();
-					if (roleNode.getNodeType() == Node.ELEMENT_NODE) {
+					if (roleNode.getNodeType() == Node.ELEMENT_NODE && isValidTag(roleNode.getNodeName())) {
 						rolePhrase = roleNode.getTextContent();
 
 						final Tuple<Integer, Integer> positions = getStartAndEndPositions(rolePhrase,
 								contentNode.getTextContent());
+						if(positions==null){
+							throw new IllegalArgumentException("Position can not be null. RolePhrase=" +rolePhrase+" filename="+fileName);
+						}
 						allPositions.add(positions);
 						if (roleNode.hasChildNodes()) {
 							for (int j = 0; j < roleNode.getChildNodes().getLength(); j++) {
 								final Node headRoleNode = roleNode.getChildNodes().item(j);
+								if (headRoleNode.getNodeType() != Node.ELEMENT_NODE || !isValidTag(headRoleNode.getNodeName())) {
+									continue;
+								}
 								headRole = headRoleNode.getTextContent();
 
 								if (headRoleNode.hasAttributes()) {
@@ -83,8 +89,17 @@ public class GroundTruthParserModifiedNewStyle {
 		}
 	}
 
+	private static boolean isValidTag(String nodeName) {
+		if(nodeName.equals("ROLE") || nodeName.equals("HEADROLE")){
+			return true;
+		}
+		return false;
+	}
+
 	private static Tuple<Integer, Integer> getStartAndEndPositions(final String rolePhrase, final String textContent) {
-		final Pattern pattern = Pattern.compile("(?)" + rolePhrase);
+		String replecedRolePhrase = rolePhrase.replaceAll("\\(", "\\\\(");
+		replecedRolePhrase = replecedRolePhrase.replaceAll("\\)", "\\\\)");
+		final Pattern pattern = Pattern.compile("(?)" + replecedRolePhrase);
 		final Matcher matcher = pattern.matcher(textContent);
 		while (matcher.find()) {
 			boolean overLapFlag = false;
@@ -137,7 +152,7 @@ public class GroundTruthParserModifiedNewStyle {
 					String rolePhrase = null;
 					String headRole = null;
 					Map<String, String> attributes = new HashMap<>();
-					if (roleNode.getNodeType() == Node.ELEMENT_NODE) {
+					if (roleNode.getNodeType() == Node.ELEMENT_NODE && isValidTag(roleNode.getNodeName())) {
 						rolePhrase = roleNode.getTextContent();
 
 						final Tuple<Integer, Integer> positions = getStartAndEndPositions(rolePhrase,

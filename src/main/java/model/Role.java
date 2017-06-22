@@ -11,17 +11,16 @@ public class Role {
 	private int endRolePhrasePositon;
 	private Map<String, String> xmlAttributes;
 	
-	
 	public Role(String rolePhrase, String headRole, int startRolePhrasePosition, int endRolePhrasePosition,
 			Map<String, String> xmlAttributes) {
 		if(rolePhrase == null){
 			throw new IllegalArgumentException("RolePhrase is null");
 		}
 		if(headRole == null){
-			throw new IllegalArgumentException("HeadRole is null");
+			throw new IllegalArgumentException("HeadRole is null for role: "+rolePhrase);
 		}
-		if(xmlAttributes == null){
-			throw new IllegalArgumentException("xmlAttributes is null");
+		if(xmlAttributes == null || xmlAttributes.isEmpty()){
+			throw new IllegalArgumentException("xmlAttributes is null or empty for role: "+rolePhrase);
 		}
 		this.rolePhrase = rolePhrase;
 		this.headRole = headRole;

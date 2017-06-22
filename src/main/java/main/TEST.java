@@ -3,8 +3,10 @@ package main;
 import java.util.HashMap;
 import java.util.Map;
 
+import evaluationmodified.GroundTruthProviderFileBasedModified;
 import evaluationmodifiednewstyle.GroundTruthFileModifiedNewStyle;
 import evaluationmodifiednewstyle.GroundTruthParserModifiedNewStyle;
+import evaluationmodifiednewstyle.GroundTruthProviderFileBasedModifiedNewStyle;
 
 public class TEST {
 
@@ -84,10 +86,17 @@ public class TEST {
 //			e.printStackTrace();
 //		      }
 		
-		final GroundTruthFileModifiedNewStyle parse = GroundTruthParserModifiedNewStyle.parse("groundTruth/NEWStyle");
-		parse.getRoles().forEach(p->{
-			System.err.println(p);
+		final GroundTruthProviderFileBasedModifiedNewStyle groundTruthProviderFileBasedModifiedNewStyle = new GroundTruthProviderFileBasedModifiedNewStyle();
+		groundTruthProviderFileBasedModifiedNewStyle.loadDate();
+		groundTruthProviderFileBasedModifiedNewStyle.getRoles().forEach(p->{
+			p.getRoles().forEach(x->{
+				System.err.println(x);
+			});
 		});
+		//		final GroundTruthFileModifiedNewStyle parse = GroundTruthParserModifiedNewStyle.parse("groundTruth/NEWStyle");
+//		parse.getRoles().forEach(p->{
+//			System.err.println(p);
+//		});
 		
 	}
 	
