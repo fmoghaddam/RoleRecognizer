@@ -88,19 +88,20 @@ public class TEST {
 //			e.printStackTrace();
 //		      }
 		
-		try {
-			final EvaluatorFullTextNewStyle evaluatorFullTextNewStyle = new EvaluatorFullTextNewStyle();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-//		final GroundTruthProviderFileBasedModifiedNewStyle groundTruthProviderFileBasedModifiedNewStyle = new GroundTruthProviderFileBasedModifiedNewStyle();
-//		groundTruthProviderFileBasedModifiedNewStyle.loadDate();
-//		groundTruthProviderFileBasedModifiedNewStyle.getRoles().forEach(p->{
-//			p.getRoles().forEach(x->{
-//				System.err.println(x);
-//			});
-//		});
+//		try {
+//			final EvaluatorFullTextNewStyle evaluatorFullTextNewStyle = new EvaluatorFullTextNewStyle();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		final GroundTruthProviderFileBasedModifiedNewStyle groundTruthProviderFileBasedModifiedNewStyle = new GroundTruthProviderFileBasedModifiedNewStyle();
+		groundTruthProviderFileBasedModifiedNewStyle.loadDate();
+		groundTruthProviderFileBasedModifiedNewStyle.getRoles().forEach(p->{
+			System.out.println(p.getFullContent());
+			p.getRoles().forEach(x->{
+				System.err.println(x.getRolePhasePosition() + "\t" +x.getRolePhaseTokenPosition() + "\t" + x.getRolePhrase() + "\t"+x.getHeadRole());
+			});
+		});
 		//		final GroundTruthFileModifiedNewStyle parse = GroundTruthParserModifiedNewStyle.parse("groundTruth/NEWStyle");
 //		parse.getRoles().forEach(p->{
 //			System.err.println(p);

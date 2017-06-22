@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import model.Position;
 import model.Role;
 
 public class GroundTruthFileModifiedNewStyle {
@@ -19,8 +20,8 @@ public class GroundTruthFileModifiedNewStyle {
 		this.time = time;
 	}
 	
-	public void addRole(String role,String headRole,int startPosition,int endPosition,Map<String,String> xmlAttributes){
-		roles.add(new Role(role,headRole,startPosition,endPosition,xmlAttributes));
+	public void addRole(String role,String headRole,Position rolePhrasePosition,Map<String,String> xmlAttributes,Position rolePhraseTokenPosition){
+		roles.add(new Role(role,headRole,rolePhrasePosition,xmlAttributes,rolePhraseTokenPosition));
 	}
 	
 	public List<Role> getRoles() {

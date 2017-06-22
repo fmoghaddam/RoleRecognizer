@@ -17,11 +17,11 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
-import util.Tuple;
+import model.Position;
 
 public class GroundTruthParserModifiedNewStyle {
 
-	private final static List<Tuple<Integer, Integer>> allPositions = new ArrayList<>();
+	private final static List<Position> allPositions = new ArrayList<>();
 
 	public static GroundTruthFileModifiedNewStyle parse(String fileName) {
 		try {
@@ -39,7 +39,7 @@ public class GroundTruthParserModifiedNewStyle {
 			final Node titleNode = docNode.getChildNodes().item(3);
 			final Node contentNode = docNode.getChildNodes().item(5);
 
-			groundTruthFile.setFullContent(contentNode.getTextContent());
+			groundTruthFile.setFullContent(contentNode.getTextContent().replaceAll("[\\t\\n\\r]"," "));
 			groundTruthFile.setTime(timeNode.getTextContent());
 			groundTruthFile.setTitle(titleNode.getTextContent());
 
@@ -53,12 +53,12 @@ public class GroundTruthParserModifiedNewStyle {
 					if (roleNode.getNodeType() == Node.ELEMENT_NODE && isValidTag(roleNode.getNodeName())) {
 						rolePhrase = roleNode.getTextContent();
 
-						final Tuple<Integer, Integer> positions = getStartAndEndPositions(rolePhrase,
+						final Position position = getStartAndEndPositions(rolePhrase,
 								contentNode.getTextContent());
-						if(positions==null){
+						if(position==null){
 							throw new IllegalArgumentException("Position can not be null. RolePhrase=" +rolePhrase+" filename="+fileName);
 						}
-						allPositions.add(positions);
+						allPositions.add(position);
 						if (roleNode.hasChildNodes()) {
 							for (int j = 0; j < roleNode.getChildNodes().getLength(); j++) {
 								final Node headRoleNode = roleNode.getChildNodes().item(j);
@@ -77,7 +77,7 @@ public class GroundTruthParserModifiedNewStyle {
 								}
 							}
 						}
-						groundTruthFile.addRole(rolePhrase, headRole, positions.key, positions.value, attributes);
+						groundTruthFile.addRole(rolePhrase, headRole, position, attributes,getTokenNumber(contentNode.getTextContent(),position));
 					}
 				}
 			}
@@ -89,6 +89,41 @@ public class GroundTruthParserModifiedNewStyle {
 		}
 	}
 
+	static Position getTokenNumber(String textContent, Position position) {
+		int tokenCounter = 0 ;
+		int currentPosition = 0;
+		for (String token : textContent.split("\\s+")) {
+			tokenCounter++;
+			currentPosition = textContent.indexOf(token, currentPosition);
+			System.out.println(position.getStartIndex() + " " + currentPosition);
+			if(currentPosition==position.getStartIndex()){
+				final String subString = textContent.substring(currentPosition);
+				int endTokenCounter = tokenCounter;
+				for(String newToken: subString.split("\\s+")){
+					System.err.println(position.getEndIndex() + " " + (currentPosition+newToken.length()));
+					if(currentPosition+newToken.length()==position.getEndIndex()){
+						return new Position(tokenCounter, endTokenCounter);
+					}else{
+						endTokenCounter++;
+						currentPosition = textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length();
+					}
+				}
+			}
+			currentPosition = currentPosition+token.length();
+		}
+		
+		return new Position(-1, -1);
+	}
+
+	private static String clarifyToken(String newToken) {
+		final char ch = newToken.charAt(newToken.length()-1);
+		if ((ch>='A' && ch<='Z') || (ch>='a' && ch<='z')) {
+			return newToken;
+		}else{
+			return newToken.substring(0, newToken.length()-1);
+		}
+	}
+
 	private static boolean isValidTag(String nodeName) {
 		if(nodeName.equals("ROLE") || nodeName.equals("HEADROLE")){
 			return true;
@@ -96,15 +131,16 @@ public class GroundTruthParserModifiedNewStyle {
 		return false;
 	}
 
-	private static Tuple<Integer, Integer> getStartAndEndPositions(final String rolePhrase, final String textContent) {
+	private static Position getStartAndEndPositions(final String rolePhrase, final String textContent) {
 		String replecedRolePhrase = rolePhrase.replaceAll("\\(", "\\\\(");
 		replecedRolePhrase = replecedRolePhrase.replaceAll("\\)", "\\\\)");
-		final Pattern pattern = Pattern.compile("(?)" + replecedRolePhrase);
+		final Pattern pattern = Pattern.compile("(?i)" + replecedRolePhrase);
 		final Matcher matcher = pattern.matcher(textContent);
 		while (matcher.find()) {
+			System.err.println(matcher.group(0));
 			boolean overLapFlag = false;
-			final Tuple<Integer, Integer> candicatePosition = new Tuple<>(matcher.start(), matcher.end());
-			for (final Tuple<Integer, Integer> p : allPositions) {
+			final Position candicatePosition = new Position(matcher.start(), matcher.end());
+			for (final Position p : allPositions) {
 				if (hasOverLap(p, candicatePosition)) {
 					overLapFlag = true;
 					break;
@@ -118,9 +154,9 @@ public class GroundTruthParserModifiedNewStyle {
 		return null;
 	}
 
-	private static boolean hasOverLap(Tuple<Integer, Integer> p, Tuple<Integer, Integer> candicatePosition) {
-		if (candicatePosition.key <= p.value && candicatePosition.key >= p.key
-				|| candicatePosition.value <= p.value && candicatePosition.value >= p.key) {
+	private static boolean hasOverLap(Position p, Position candicatePosition) {
+		if (candicatePosition.getStartIndex() <= p.getEndIndex() && candicatePosition.getStartIndex() >= p.getStartIndex()
+				|| candicatePosition.getEndIndex() <= p.getEndIndex() && candicatePosition.getEndIndex() >= p.getStartIndex()) {
 			return true;
 		}
 		return false;
@@ -155,9 +191,12 @@ public class GroundTruthParserModifiedNewStyle {
 					if (roleNode.getNodeType() == Node.ELEMENT_NODE && isValidTag(roleNode.getNodeName())) {
 						rolePhrase = roleNode.getTextContent();
 
-						final Tuple<Integer, Integer> positions = getStartAndEndPositions(rolePhrase,
+						final Position position = getStartAndEndPositions(rolePhrase,
 								contentNode.getTextContent());
-						allPositions.add(positions);
+						if(position==null){
+							throw new IllegalArgumentException("Position can not be null. RolePhrase=" +rolePhrase);
+						}
+						allPositions.add(position);
 						if (roleNode.hasChildNodes()) {
 							for (int j = 0; j < roleNode.getChildNodes().getLength(); j++) {
 								final Node headRoleNode = roleNode.getChildNodes().item(j);
@@ -173,7 +212,7 @@ public class GroundTruthParserModifiedNewStyle {
 								}
 							}
 						}
-						groundTruthFile.addRole(rolePhrase, headRole, positions.key, positions.value, attributes);
+						groundTruthFile.addRole(rolePhrase, headRole, position, attributes,getTokenNumber(contentNode.getTextContent(),position));
 					}
 				}
 			}
