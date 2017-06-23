@@ -3,6 +3,8 @@ package main;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import evaluationmodified.GroundTruthProviderFileBasedModified;
 import evaluationmodifiednewstyle.EvaluatorFullTextNewStyle;
@@ -94,19 +96,41 @@ public class TEST {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
+
+		
 		final GroundTruthProviderFileBasedModifiedNewStyle groundTruthProviderFileBasedModifiedNewStyle = new GroundTruthProviderFileBasedModifiedNewStyle();
 		groundTruthProviderFileBasedModifiedNewStyle.loadDate();
-		groundTruthProviderFileBasedModifiedNewStyle.getRoles().forEach(p->{
-			System.out.println(p.getFullContent());
-			p.getRoles().forEach(x->{
-				System.err.println(x.getRolePhasePosition() + "\t" +x.getRolePhaseTokenPosition() + "\t" + x.getRolePhrase() + "\t"+x.getHeadRole());
-			});
-		});
-		//		final GroundTruthFileModifiedNewStyle parse = GroundTruthParserModifiedNewStyle.parse("groundTruth/NEWStyle");
+//		groundTruthProviderFileBasedModifiedNewStyle.getRoles().forEach(p->{
+//			System.out.println(p.getFullContent());
+//			p.getRoles().forEach(x->{
+//				System.err.println(x.getRolePhasePosition() + "\t" +x.getRolePhaseTokenPosition() + "\t" + x.getRolePhrase() + "\t"+x.getHeadRole());
+//			});
+//		});
+		
+//		printMatches("The British monarchy", "The British monarchy");
+		
+		
+//		final GroundTruthFileModifiedNewStyle parse = GroundTruthParserModifiedNewStyle.parse("groundTruth/NEWStyle");
 //		parse.getRoles().forEach(p->{
 //			System.err.println(p);
 //		});
 		
+	}
+	
+	public static void printMatches(String text, String regex) {
+		
+		final String str = "British";
+		System.err.println(text.indexOf(str,2));
+		System.err.println(text.indexOf(str,2)+str.length());
+		
+	    Pattern pattern = Pattern.compile(regex);
+	    Matcher matcher = pattern.matcher(text);
+	    // Check all occurrences
+	    while (matcher.find()) {
+	        System.out.print("Start index: " + matcher.start());
+	        System.out.print(" End index: " + matcher.end());
+	        System.out.println(" Found: " + matcher.group());
+	    }
 	}
 	
 }

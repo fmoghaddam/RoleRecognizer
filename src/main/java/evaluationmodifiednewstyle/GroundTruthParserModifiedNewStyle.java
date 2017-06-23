@@ -2,6 +2,8 @@ package evaluationmodifiednewstyle;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +19,9 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.process.CoreLabelTokenFactory;
+import edu.stanford.nlp.process.PTBTokenizer;
 import model.Position;
 
 public class GroundTruthParserModifiedNewStyle {
@@ -39,7 +44,7 @@ public class GroundTruthParserModifiedNewStyle {
 			final Node titleNode = docNode.getChildNodes().item(3);
 			final Node contentNode = docNode.getChildNodes().item(5);
 
-			groundTruthFile.setFullContent(contentNode.getTextContent().replaceAll("[\\t\\n\\r]"," "));
+			groundTruthFile.setFullContent(contentNode.getTextContent().replaceAll("[\\t\\n\\r]"," ").trim());
 			groundTruthFile.setTime(timeNode.getTextContent());
 			groundTruthFile.setTitle(titleNode.getTextContent());
 
@@ -54,7 +59,7 @@ public class GroundTruthParserModifiedNewStyle {
 						rolePhrase = roleNode.getTextContent();
 
 						final Position position = getStartAndEndPositions(rolePhrase,
-								contentNode.getTextContent());
+								groundTruthFile.getFullContent());
 						if(position==null){
 							throw new IllegalArgumentException("Position can not be null. RolePhrase=" +rolePhrase+" filename="+fileName);
 						}
@@ -77,7 +82,7 @@ public class GroundTruthParserModifiedNewStyle {
 								}
 							}
 						}
-						groundTruthFile.addRole(rolePhrase, headRole, position, attributes,getTokenNumber(contentNode.getTextContent(),position));
+						groundTruthFile.addRole(rolePhrase, headRole, position, attributes,getTokenNumber(groundTruthFile.getFullContent(),position));
 					}
 				}
 			}
@@ -89,32 +94,63 @@ public class GroundTruthParserModifiedNewStyle {
 		}
 	}
 
+	
+	
 	static Position getTokenNumber(String textContent, Position position) {
 		int tokenCounter = 0 ;
 		int currentPosition = 0;
 		for (String token : textContent.split("\\s+")) {
 			tokenCounter++;
 			currentPosition = textContent.indexOf(token, currentPosition);
-			System.out.println(position.getStartIndex() + " " + currentPosition);
+//			System.out.println(position.getStartIndex() + " " + currentPosition);
 			if(currentPosition==position.getStartIndex()){
 				final String subString = textContent.substring(currentPosition);
 				int endTokenCounter = tokenCounter;
 				for(String newToken: subString.split("\\s+")){
-					System.err.println(position.getEndIndex() + " " + (currentPosition+newToken.length()));
-					if(currentPosition+newToken.length()==position.getEndIndex()){
+//					System.err.println(position.getEndIndex() + " " + (textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length()));
+					currentPosition = textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length();
+					if(currentPosition==position.getEndIndex()){
 						return new Position(tokenCounter, endTokenCounter);
 					}else{
 						endTokenCounter++;
-						currentPosition = textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length();
 					}
 				}
 			}
-			currentPosition = currentPosition+token.length();
+			currentPosition = currentPosition+token.length()-1;
 		}
 		
 		return new Position(-1, -1);
 	}
 
+	static Position getTokenNumberstanfordTokenizer(String textContent, Position position) {
+		int tokenCounter = 0 ;
+		int currentPosition = 0;
+		 PTBTokenizer<CoreLabel> ptbt = new PTBTokenizer<>(new StringReader(textContent),
+	             new CoreLabelTokenFactory(), "");
+	     while (ptbt.hasNext()) {
+	       CoreLabel label = ptbt.next();
+	       String token = label.originalText();
+	       tokenCounter++;
+			currentPosition = textContent.indexOf(token, currentPosition);
+//			System.out.println(position.getStartIndex() + " " + currentPosition);
+			if(currentPosition==position.getStartIndex()){
+				final String subString = textContent.substring(currentPosition);
+				int endTokenCounter = tokenCounter;
+				for(String newToken: subString.split("\\s+")){
+//					System.err.println(position.getEndIndex() + " " + (textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length()));
+					currentPosition = textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length();
+					if(currentPosition==position.getEndIndex()){
+						return new Position(tokenCounter, endTokenCounter);
+					}else{
+						endTokenCounter++;
+					}
+				}
+			}
+			currentPosition = currentPosition+token.length()-1;
+	     }
+		
+		return new Position(-1, -1);
+	}
 	private static String clarifyToken(String newToken) {
 		final char ch = newToken.charAt(newToken.length()-1);
 		if ((ch>='A' && ch<='Z') || (ch>='a' && ch<='z')) {
@@ -134,10 +170,9 @@ public class GroundTruthParserModifiedNewStyle {
 	private static Position getStartAndEndPositions(final String rolePhrase, final String textContent) {
 		String replecedRolePhrase = rolePhrase.replaceAll("\\(", "\\\\(");
 		replecedRolePhrase = replecedRolePhrase.replaceAll("\\)", "\\\\)");
-		final Pattern pattern = Pattern.compile("(?i)" + replecedRolePhrase);
+		final Pattern pattern = Pattern.compile("(?i)" +replecedRolePhrase);
 		final Matcher matcher = pattern.matcher(textContent);
 		while (matcher.find()) {
-			System.err.println(matcher.group(0));
 			boolean overLapFlag = false;
 			final Position candicatePosition = new Position(matcher.start(), matcher.end());
 			for (final Position p : allPositions) {
