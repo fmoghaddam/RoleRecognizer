@@ -131,7 +131,7 @@ public class GroundTruthParserModifiedNewStyle {
 			String token = label.originalText();
 			tokenCounter++;
 			currentPosition = textContent.indexOf(token, currentPosition);
-//			System.out.println(tokenCounter+"----"+token +" === ="+position.getStartIndex() + " " + currentPosition);
+//			System.out.println(tokenCounter+"----"+token +" ===   "+position.getStartIndex() + " " + currentPosition);
 			if(currentPosition==position.getStartIndex()){
 				final String subString = textContent.substring(currentPosition);
 				int endTokenCounter = tokenCounter;

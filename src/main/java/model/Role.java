@@ -29,7 +29,7 @@ public class Role {
 			throw new IllegalArgumentException("rolePhasePosition is null for role: "+rolePhrase);
 		}
 		if(rolePhaseTokenPosition.getStartIndex()==-1 || rolePhaseTokenPosition.getEndIndex()==-1){
-			throw new IllegalArgumentException("rolePhaseTokenPosition is not valid for role: "+rolePhrase);
+			throw new IllegalArgumentException("rolePhaseTokenPosition is not valid for role: "+rolePhrase+" at position "+rolePhrasePosition);
 		}
 		
 		this.rolePhrase = rolePhrase;
