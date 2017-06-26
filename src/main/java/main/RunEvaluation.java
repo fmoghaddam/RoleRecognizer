@@ -38,9 +38,15 @@ public class RunEvaluation {
 //		System.out.println(POSTagger.runPOSTaggerWithNoNER("I am an <LOCATION> guy, person"));
 //		System.out.println(POSTagger.replaceWordsWithTagsButNotNER(POSTagger.runPOSTaggerWithNoNER("I am an <LOCATION> guy, person"),"I am an <LOCATION> guy, person"));
 		
+//		String s = "Monarchy";
+//		System.err.println(s.toLowerCase().contains("monarch".toLowerCase()));
+		
 		final EvaluatorFullTextNewStyle eval = new EvaluatorFullTextNewStyle();
 		eval.exactMatchEvaluationWithOriginalDictionary();
 		eval.exactMatchEvaluationWithOriginalDictionaryConsiderCategory();
+		eval.evaluationWithNERDictionary();
+		eval.evaluationWithNERDictionaryConsiderCategory();
+		
 		
 	}
 

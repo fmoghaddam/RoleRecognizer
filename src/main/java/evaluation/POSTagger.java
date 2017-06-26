@@ -17,8 +17,8 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
-import evaluation.NERTagger.NER_TAG;
 import model.Category;
+import model.NER_TAG;
 
 public class POSTagger {
 
