@@ -9,6 +9,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import model.Category;
+import model.Position;
 
 public class EvaluatorFullTextNewStyleTest {
 
@@ -31,8 +32,28 @@ public class EvaluatorFullTextNewStyleTest {
 		assertEquals(2,statistics.get(Category.resolve("CEO".toLowerCase())).intValue());
 		assertEquals(1,statistics.get(Category.resolve("POPE".toLowerCase())).intValue());
 		assertEquals(1,statistics.get(Category.resolve("PRESIDENT".toLowerCase())).intValue());
+	}
+	
+	@Test
+	public void testGetTokenNumberStanfordTokenizer(){
+		final String test = "I am an student at, KIT queen's";
+		Position tokenNumber = GroundTruthParserModifiedNewStyle.getTokenNumberStanfordTokenizer(test,new Position(0, 1));
+		assertEquals(1, tokenNumber.getStartIndex());
 		
+		tokenNumber = GroundTruthParserModifiedNewStyle.getTokenNumberStanfordTokenizer(test,new Position(0, 4));
+		assertEquals(1, tokenNumber.getStartIndex());
+		assertEquals(2, tokenNumber.getEndIndex());
 		
+		tokenNumber = GroundTruthParserModifiedNewStyle.getTokenNumberStanfordTokenizer(test,new Position(5, 15));
+		assertEquals(3, tokenNumber.getStartIndex());
+		assertEquals(4, tokenNumber.getEndIndex());
+		
+		tokenNumber = GroundTruthParserModifiedNewStyle.getTokenNumberStanfordTokenizer(test,new Position(16, 18));
+		assertEquals(5, tokenNumber.getStartIndex());
+		
+		tokenNumber = GroundTruthParserModifiedNewStyle.getTokenNumberStanfordTokenizer(test,new Position(24, 29));
+		assertEquals(7, tokenNumber.getStartIndex());
+		assertEquals(7, tokenNumber.getEndIndex());
 	}
 
 }

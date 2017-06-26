@@ -1,6 +1,7 @@
 package evaluationmodifiednewstyle;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.apache.log4j.Logger;
 
 import main.RoleListProvider;
 import main.RoleListProviderFileBased;
+import metrics.FMeasure;
 import metrics.Precision;
 import metrics.Recall;
 import model.Category;
@@ -75,81 +77,58 @@ public class EvaluatorFullTextNewStyle {
 		for (final GroundTruthFileModifiedNewStyle groundTruthFile : groundTruthProvider.getRoles()) {
 			final TagPositions tagPositions = new TagPositions();
 			final String originalFullText = groundTruthFile.getFullContent();
-			final Set<String> alreadyFound = new HashSet<>();
 			final List<Role> groundTruthFileCopy = groundTruthFile.getRoles();
+			final List<Role> groundTruthFileCopyTemp = groundTruthFile.getRoles();
 			for (final Entry<String, Set<Category>> roleEntity : originalRoleProvider.getData().entrySet()) {
 
 				final String dictionaryRole = roleEntity.getKey();
-				final Set<Category> dictionaryCategories = roleEntity.getValue();
 
 				final Pattern pattern = Pattern.compile("(?im)" + dictionaryRole);
 				final Matcher matcher = pattern.matcher(originalFullText);
 
 				while (matcher.find()) {
-
 					final String foundRoleInText = matcher.group(0);
-
 					final TagPosition candicatePosition = new TagPosition(foundRoleInText, matcher.start(), matcher.end());
 					if (tagPositions.alreadyExist(candicatePosition)) {
 						continue;
 					}
 					tagPositions.add(candicatePosition);
-
+					groundTruthFileCopy.clear();
+					groundTruthFileCopy.addAll(groundTruthFileCopyTemp);
+					boolean found = false;
 					for (final Role role : groundTruthFileCopy) {
-						if (hasPositionOverlap(candicatePosition, role.getRolePhasePosition())) {
-							
-						} else {
-							precision.addFalsePositive();
-						}
+						if (hasPositionOverlapByToken(GroundTruthParserModifiedNewStyle.getTokenNumberStanfordTokenizer(originalFullText,candicatePosition), role.getRolePhaseTokenPosition())) {
+							if(foundRoleInText.contains(role.getHeadRole())){
+								precision.addTruePositive();
+								recall.addTruePositive();
+								groundTruthFileCopyTemp.remove(role);
+								found = true;
+								break;
+							}else{
+								precision.addFalsePositive();
+								found = true;
+								break;
+							}
+						} 
 					}
-
-					// final List<Tuple<Category, String>>
-					// listOfCategoryFromGroundTruth =
-					// groundTruthFileCopy.get(foundRoleInText);
-					// if (listOfCategoryFromGroundTruth == null ||
-					// listOfCategoryFromGroundTruth.isEmpty()) {
-					// precision.addFalsePositive();
-					// } else {
-					// alreadyFound.add(foundRoleInText);
-					// precision.addTruePositive();
-					// recall.addTruePositive();
-					//
-					// //List<Tuple<Category, String>> list =
-					// groundTruthFileCopy.get(foundRoleInText);
-					// if(listOfCategoryFromGroundTruth.size()==1){
-					// groundTruthFileCopy.remove(foundRoleInText);
-					// }else{
-					// final Set<Category> collect = new HashSet<>(
-					// listOfCategoryFromGroundTruth.stream().map(p ->
-					// p.key).collect(Collectors.toList()));
-					// final Set<Category> intesection =
-					// hasIntersection(collect, dictionaryCategories);
-					// if (!intesection.isEmpty()) {
-					// for(int i=0;i<listOfCategoryFromGroundTruth.size();i++){
-					// if(intesection.contains(listOfCategoryFromGroundTruth.get(i).key)){
-					// groundTruthFileCopy.get(foundRoleInText).remove(i);
-					// break;
-					// }
-					// }
-					// }
-					// }
-					// }
+					if(!found){
+						precision.addFalsePositive();
+					}
 				}
 			}
-			// for (int i = 0; i < groundTruthFileCopy.keySet().size(); i++) {
-			// recall.addFalseNegative();
-			// }
+			for (int i = 0; i < groundTruthFileCopyTemp.size(); i++) {
+				recall.addFalseNegative();
+			}
 		}
-		// LOG.info("exactMatchEvaluationWithOriginalDictionary");
-		// LOG.info("Precision= " + precision.getValue());
-		// LOG.info("Recall= " + recall.getValue());
-		// LOG.info("FMeasure= " + new FMeasure(precision.getValue(),
-		// recall.getValue()).getValue());
-		// LOG.info("--------------------------------------------");
-
+		LOG.info("exactMatchEvaluationWithOriginalDictionary");
+		LOG.info("Precision= " + precision.getValue());
+		LOG.info("Recall= " + recall.getValue());
+		LOG.info("FMeasure= " + new FMeasure(precision.getValue(),
+				recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
 	}
 
-	private boolean hasPositionOverlap(Position candicatePosition, Position rolePhasePosition) {
+	private boolean hasPositionOverlapByToken(Position candicatePosition, Position rolePhasePosition) {
 		if (candicatePosition.getStartIndex() <= rolePhasePosition.getStartIndex()
 				&& candicatePosition.getEndIndex() >= rolePhasePosition.getEndIndex()) {
 			return true;
@@ -163,6 +142,89 @@ public class EvaluatorFullTextNewStyle {
 		return false;
 	}
 
+	boolean hasPositionOverlap(Position candicatePosition, Position rolePhasePosition) {
+		if (candicatePosition.getStartIndex() <= rolePhasePosition.getStartIndex()
+				&& candicatePosition.getEndIndex() >= rolePhasePosition.getEndIndex()) {
+			return true;
+		} else if (rolePhasePosition.getStartIndex() >= candicatePosition.getStartIndex()
+				&& rolePhasePosition.getStartIndex() <= candicatePosition.getEndIndex()) {
+			return true;
+		} else if (rolePhasePosition.getEndIndex() >= candicatePosition.getStartIndex()
+				&& rolePhasePosition.getEndIndex() <= candicatePosition.getEndIndex()) {
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Working
+	 */
+	public void exactMatchEvaluationWithOriginalDictionaryConsiderCategory() {
+		resetMetrics();
+		for (final GroundTruthFileModifiedNewStyle groundTruthFile : groundTruthProvider.getRoles()) {
+			final TagPositions tagPositions = new TagPositions();
+			final String originalFullText = groundTruthFile.getFullContent();
+			final List<Role> groundTruthFileCopy = groundTruthFile.getRoles();
+			final List<Role> groundTruthFileCopyTemp = groundTruthFile.getRoles();
+			for (final Entry<String, Set<Category>> roleEntity : originalRoleProvider.getData().entrySet()) {
+
+				final String dictionaryRole = roleEntity.getKey();
+				final Set<Category> dictionaryCategories = roleEntity.getValue();
+
+				final Pattern pattern = Pattern.compile("(?im)" + dictionaryRole);
+				final Matcher matcher = pattern.matcher(originalFullText);
+
+				while (matcher.find()) {
+					final String foundRoleInText = matcher.group(0);
+					final TagPosition candicatePosition = new TagPosition(foundRoleInText, matcher.start(), matcher.end());
+					if (tagPositions.alreadyExist(candicatePosition)) {
+						continue;
+					}
+					tagPositions.add(candicatePosition);
+					groundTruthFileCopy.clear();
+					groundTruthFileCopy.addAll(groundTruthFileCopyTemp);
+					boolean found = false;
+					for (final Role role : groundTruthFileCopy) {
+						if (hasPositionOverlapByToken(GroundTruthParserModifiedNewStyle.getTokenNumberStanfordTokenizer(originalFullText,candicatePosition), role.getRolePhaseTokenPosition())) {
+							if(foundRoleInText.contains(role.getHeadRole())){
+								final Category category = Category.resolve(role.getXmlAttributes().get("type"));
+								final Set<Category> intesection = hasIntersection(new HashSet<>(Arrays.asList(category)),dictionaryCategories);
+								if(intesection!=null && !intesection.isEmpty()){
+									precision.addTruePositive();
+									recall.addTruePositive();
+									groundTruthFileCopyTemp.remove(role);
+									found = true;
+									break;
+								}else{
+									precision.addFalsePositive();
+									found = true;
+									break;
+								}
+							}else{
+								precision.addFalsePositive();
+								found = true;
+								break;
+							}
+						} 
+					}
+					if(!found){
+						precision.addFalsePositive();
+					}
+				}
+			}
+			for (int i = 0; i < groundTruthFileCopyTemp.size(); i++) {
+				recall.addFalseNegative();
+			}
+		}
+		LOG.info("exactMatchEvaluationWithOriginalDictionaryConsdeirCategory");
+		LOG.info("Precision= " + precision.getValue());
+		LOG.info("Recall= " + recall.getValue());
+		LOG.info("FMeasure= " + new FMeasure(precision.getValue(),
+				recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
+	}
+	
+	
 	//
 	// /**
 	// * Working
@@ -279,16 +341,16 @@ public class EvaluatorFullTextNewStyle {
 	// LOG.info("--------------------------------------------");
 	// }
 	//
-	// private Set<Category> hasIntersection(Set<Category> collect,
-	// Set<Category> dictionaryCategories) {
-	// Set<Category> intersection = new HashSet<>();
-	// for (Category cat : collect) {
-	// if (dictionaryCategories.contains(cat)) {
-	// intersection.add(cat);
-	// }
-	// }
-	// return intersection;
-	// }
+	private Set<Category> hasIntersection(Set<Category> collect,
+			Set<Category> dictionaryCategories) {
+		Set<Category> intersection = new HashSet<>();
+		for (Category cat : collect) {
+			if (dictionaryCategories.contains(cat)) {
+				intersection.add(cat);
+			}
+		}
+		return intersection;
+	}
 	//
 	// /**
 	// * Working

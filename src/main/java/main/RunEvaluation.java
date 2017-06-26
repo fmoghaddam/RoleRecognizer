@@ -3,6 +3,7 @@ package main;
 import java.io.IOException;
 
 import evaluationmodified.EvaluatorFullText;
+import evaluationmodifiednewstyle.EvaluatorFullTextNewStyle;
 
 public class RunEvaluation {
 
@@ -14,19 +15,19 @@ public class RunEvaluation {
 //		eval.evaluationWithPOSAndNERDictionary();
 //		eval.evaluationWithPOSDictionary();
 		
-		EvaluatorFullText eval = new EvaluatorFullText();
+//		EvaluatorFullText eval = new EvaluatorFullText();
+////		
+//		eval.exactMatchEvaluationWithOriginalDictionary();
+//		eval.exactMatchEvaluationWithOriginalDictionaryConsdeirCategory();
+////		
+//		eval.evaluationWithNERDictionary();
+//		eval.evaluationWithNERDictionaryConsiderCategory();
+////		
+//		eval.evaluationWithPOSAndNERDictionary();
+//		eval.evaluationWithPOSAndNERDictionaryConsiderCategory();
 //		
-		eval.exactMatchEvaluationWithOriginalDictionary();
-		eval.exactMatchEvaluationWithOriginalDictionaryConsdeirCategory();
-//		
-		eval.evaluationWithNERDictionary();
-		eval.evaluationWithNERDictionaryConsiderCategory();
-//		
-		eval.evaluationWithPOSAndNERDictionary();
-		eval.evaluationWithPOSAndNERDictionaryConsiderCategory();
-		
-		eval.evaluationWithNERAndThenPOSDictionary();
-		eval.evaluationWithNERAndThenPOSDictionaryConsiderCategory();
+//		eval.evaluationWithNERAndThenPOSDictionary();
+//		eval.evaluationWithNERAndThenPOSDictionaryConsiderCategory();
 //		
 //		
 //		
@@ -36,6 +37,11 @@ public class RunEvaluation {
 		
 //		System.out.println(POSTagger.runPOSTaggerWithNoNER("I am an <LOCATION> guy, person"));
 //		System.out.println(POSTagger.replaceWordsWithTagsButNotNER(POSTagger.runPOSTaggerWithNoNER("I am an <LOCATION> guy, person"),"I am an <LOCATION> guy, person"));
+		
+		final EvaluatorFullTextNewStyle eval = new EvaluatorFullTextNewStyle();
+		eval.exactMatchEvaluationWithOriginalDictionary();
+		eval.exactMatchEvaluationWithOriginalDictionaryConsiderCategory();
+		
 	}
 
 }

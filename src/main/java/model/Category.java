@@ -19,7 +19,7 @@ public enum Category {
 	
 	public static Category resolve(String text){
 		for(Category cat: Category.values()){
-			if(cat.text().equals(text)){
+			if(cat.text().equals(text.toLowerCase())){
 				return cat;
 			}
 		}

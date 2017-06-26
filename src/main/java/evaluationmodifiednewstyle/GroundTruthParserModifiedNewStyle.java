@@ -81,7 +81,7 @@ public class GroundTruthParserModifiedNewStyle {
 								}
 							}
 						}
-						groundTruthFile.addRole(rolePhrase, headRole, position, attributes,getTokenNumberstanfordTokenizer(groundTruthFile.getFullContent(),position));
+						groundTruthFile.addRole(rolePhrase, headRole, position, attributes,getTokenNumberStanfordTokenizer(groundTruthFile.getFullContent(),position));
 					}
 				}
 			}
@@ -121,7 +121,7 @@ public class GroundTruthParserModifiedNewStyle {
 		return new Position(-1, -1);
 	}
 
-	static Position getTokenNumberstanfordTokenizer(String textContent, Position position) {
+	static Position getTokenNumberStanfordTokenizer(String textContent, Position position) {
 		int tokenCounter = 0 ;
 		int currentPosition = 0;
 		PTBTokenizer<CoreLabel> ptbt = new PTBTokenizer<>(new StringReader(textContent),
@@ -131,17 +131,26 @@ public class GroundTruthParserModifiedNewStyle {
 			String token = label.originalText();
 			tokenCounter++;
 			currentPosition = textContent.indexOf(token, currentPosition);
-			//			System.out.println(position.getStartIndex() + " " + currentPosition);
+//			System.out.println(token +" === "+position.getStartIndex() + " " + currentPosition);
 			if(currentPosition==position.getStartIndex()){
 				final String subString = textContent.substring(currentPosition);
 				int endTokenCounter = tokenCounter;
-				for(String newToken: subString.split("\\s+")){
-					//					System.err.println(position.getEndIndex() + " " + (textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length()));
+				
+				final PTBTokenizer<CoreLabel> ptbtInternal = new PTBTokenizer<>(new StringReader(subString),
+						new CoreLabelTokenFactory(), "");
+				while (ptbtInternal.hasNext()) {
+					CoreLabel labelInternal = ptbtInternal.next();
+					String newToken = labelInternal.originalText();
+//					System.err.println(position.getEndIndex() + " " + (textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length()));
 					currentPosition = textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length();
 					if(currentPosition==position.getEndIndex()){
 						return new Position(tokenCounter, endTokenCounter);
 					}else{
-						endTokenCounter++;
+						if(currentPosition>position.getEndIndex()){
+							return new Position(tokenCounter, endTokenCounter);
+						}else{
+							endTokenCounter++;
+						}
 					}
 				}
 			}
@@ -292,7 +301,7 @@ public class GroundTruthParserModifiedNewStyle {
 								}
 							}
 						}
-						groundTruthFile.addRole(rolePhrase, headRole, position, attributes,getTokenNumber(contentNode.getTextContent(),position));
+						groundTruthFile.addRole(rolePhrase, headRole, position, attributes,getTokenNumberStanfordTokenizer(contentNode.getTextContent(),position));
 					}
 				}
 			}
