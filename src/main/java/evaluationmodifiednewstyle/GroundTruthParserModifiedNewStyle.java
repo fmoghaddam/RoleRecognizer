@@ -107,7 +107,7 @@ public class GroundTruthParserModifiedNewStyle {
 				int endTokenCounter = tokenCounter;
 				for(String newToken: subString.split("\\s+")){
 					//					System.err.println(position.getEndIndex() + " " + (textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length()));
-					currentPosition = textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length();
+					currentPosition = textContent.indexOf(newToken, currentPosition)+newToken.length();
 					if(currentPosition==position.getEndIndex()){
 						return new Position(tokenCounter, endTokenCounter);
 					}else{
@@ -131,7 +131,7 @@ public class GroundTruthParserModifiedNewStyle {
 			String token = label.originalText();
 			tokenCounter++;
 			currentPosition = textContent.indexOf(token, currentPosition);
-//			System.out.println(tokenCounter+"----"+token +" === "+position.getStartIndex() + " " + currentPosition);
+//			System.out.println(tokenCounter+"----"+token +" === ="+position.getStartIndex() + " " + currentPosition);
 			if(currentPosition==position.getStartIndex()){
 				final String subString = textContent.substring(currentPosition);
 				int endTokenCounter = tokenCounter;
@@ -141,8 +141,8 @@ public class GroundTruthParserModifiedNewStyle {
 				while (ptbtInternal.hasNext()) {
 					CoreLabel labelInternal = ptbtInternal.next();
 					String newToken = labelInternal.originalText();
-//					System.err.println(position.getEndIndex() + " " + (textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length()));
-					currentPosition = textContent.indexOf(newToken, currentPosition)+clarifyToken(newToken).length();
+//					System.err.println(position.getEndIndex() + " " + (textContent.indexOf(newToken, currentPosition)+newToken.length()));
+					currentPosition = textContent.indexOf(newToken, currentPosition)+newToken.length();
 					if(currentPosition==position.getEndIndex()){
 						return new Position(tokenCounter, endTokenCounter);
 					}else{
@@ -159,14 +159,15 @@ public class GroundTruthParserModifiedNewStyle {
 
 		return new Position(-1, -1);
 	}
-	private static String clarifyToken(String newToken) {
-		final char ch = newToken.charAt(newToken.length()-1);
-		if ((ch>='A' && ch<='Z') || (ch>='a' && ch<='z')) {
-			return newToken;
-		}else{
-			return newToken.substring(0, newToken.length()-1);
-		}
-	}
+	
+//	private static String clarifyToken(String newToken) {
+//		final char ch = newToken.charAt(newToken.length()-1);
+//		if ((ch>='A' && ch<='Z') || (ch>='a' && ch<='z')) {
+//			return newToken;
+//		}else{
+//			return newToken.substring(0, newToken.length()-1);
+//		}
+//	}
 
 	private static boolean isValidTag(String nodeName) {
 		if(nodeName.equals("ROLE") || nodeName.equals("HEADROLE")){

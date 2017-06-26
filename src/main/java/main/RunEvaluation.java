@@ -46,6 +46,10 @@ public class RunEvaluation {
 		eval.exactMatchEvaluationWithOriginalDictionaryConsiderCategory();
 		eval.evaluationWithNERDictionary();
 		eval.evaluationWithNERDictionaryConsiderCategory();
+		eval.evaluationWithPOSAndNERDictionary();
+		eval.evaluationWithPOSAndNERDictionaryConsiderCategory();
+		eval.evaluationWithNERAndThenPOSDictionary();
+		eval.evaluationWithNERAndThenPOSDictionaryConsiderCategory();
 		
 		
 	}
