@@ -2,7 +2,6 @@ package main;
 
 import java.io.IOException;
 
-import evaluationmodified.EvaluatorFullText;
 import evaluationmodifiednewstyle.EvaluatorFullTextNewStyle;
 
 public class RunEvaluation {
@@ -42,9 +41,17 @@ public class RunEvaluation {
 //		System.err.println(s.toLowerCase().contains("monarch".toLowerCase()));
 		
 		final EvaluatorFullTextNewStyle eval = new EvaluatorFullTextNewStyle();
+//		eval.exactMatchEvaluationWithOriginalDictionaryDictionaryCompletenessTest();
+//		eval.exactMatchContainEvaluationWithOriginalDictionaryDictionaryCompletenessTest();
+//		
 //		eval.exactMatchEvaluationWithOriginalDictionary();
-//		eval.exactMatchEvaluationWithOriginalDictionaryConsiderCategory();
+		eval.exactMatchEvaluationWithOriginalDictionaryConsiderCategory();
+//		
+//		eval.evaluationWithNERDictionaryDictionaryCompletenessTest();
 //		eval.evaluationWithNERDictionary();
+		
+//		eval.evaluationWithNERPOSDictionaryDictionaryCompletenessTest();
+//		eval.evaluationWithNERAndThenPOSDictionaryDictionaryCompletenessTest();
 //		eval.evaluationWithNERDictionaryConsiderCategory();
 //		eval.evaluationWithPOSAndNERDictionary();
 //		eval.evaluationWithPOSAndNERDictionaryConsiderCategory();

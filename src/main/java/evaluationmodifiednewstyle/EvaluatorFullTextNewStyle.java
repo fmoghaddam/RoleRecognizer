@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
+import evaluation.GroundTruthFile;
 import evaluation.NERTagger;
 import evaluation.POSTagger;
 import main.RoleListProvider;
@@ -26,6 +27,7 @@ import model.Position;
 import model.Role;
 import model.TagPosition;
 import model.TagPositions;
+import util.Tuple;
 
 public class EvaluatorFullTextNewStyle {
 
@@ -71,6 +73,181 @@ public class EvaluatorFullTextNewStyle {
 		LOG.info("-------------------------------------");
 		return statistic;
 	}
+	
+	public void exactMatchEvaluationWithOriginalDictionaryDictionaryCompletenessTest() {
+		resetMetrics();
+		for (final GroundTruthFileModifiedNewStyle groundTruthFile : groundTruthProvider.getRoles()) {
+			for(Role entry:groundTruthFile.getRoles()){
+				final Category category = Category.resolve(entry.getXmlAttributes().get("type"));
+				final String candicateText = entry.getHeadRole();
+				final Set<Category> categories = originalRoleProvider.getData().get(candicateText);
+				if (categories == null) {
+					recall.addFalseNegative();
+				} else {
+					final boolean hasIntesection = categories.contains(category);
+					if (hasIntesection) {
+						precision.addTruePositive();
+						recall.addTruePositive();
+					} else {
+						precision.addFalsePositive();
+					}
+				}
+			}
+
+		}
+		LOG.info("exactMatchEvaluationWithOriginalDictionaryDictionaryCompletenessTest");
+		LOG.info("Precision= " + precision.getValue());
+		LOG.info("Recall= " + recall.getValue());
+		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
+	}
+
+	public void evaluationWithNERDictionaryDictionaryCompletenessTest() {
+		resetMetrics();
+		final Map<String, Set<Category>> generateNERDictionary = NERTagger
+				.generateDictionary(originalRoleProvider.getData());
+		for (final GroundTruthFileModifiedNewStyle groundTruthFile : groundTruthProvider.getRoles()) {
+			for(Role entry:groundTruthFile.getRoles()){
+				final Category category = Category.resolve(entry.getXmlAttributes().get("type"));
+				final String candicateText = entry.getHeadRole();
+				final String convretedToNERText = NERTagger.runTagger(candicateText);
+				final String replaceWordsWithTags = NERTagger.replaceWordsWithTags(convretedToNERText,candicateText).toLowerCase();
+				
+				final Set<Category> categories = generateNERDictionary.get(replaceWordsWithTags);
+				if (categories == null) {
+					recall.addFalseNegative();
+				} else {
+					final boolean hasIntesection = categories.contains(category);
+					if (hasIntesection) {
+						precision.addTruePositive();
+						recall.addTruePositive();
+					} else {
+						precision.addFalsePositive();
+					}
+				}
+			}
+
+		}
+		LOG.info("evaluationWithNERDictionaryDictionaryCompletenessTest");
+		LOG.info("Precision= " + precision.getValue());
+		LOG.info("Recall= " + recall.getValue());
+		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
+	}
+	
+	public void evaluationWithNERPOSDictionaryDictionaryCompletenessTest() {
+		resetMetrics();
+		final Map<String, Set<Category>> generateNERDictionary = NERTagger
+				.generateDictionary(originalRoleProvider.getData());
+		final Map<String, Set<Category>> generatePOSDictionary = POSTagger
+				.generatePOSAndNERDictionary(generateNERDictionary);
+		for (final GroundTruthFileModifiedNewStyle groundTruthFile : groundTruthProvider.getRoles()) {
+			for(Role entry:groundTruthFile.getRoles()){
+				final Category category = Category.resolve(entry.getXmlAttributes().get("type"));
+				final String candicateText = entry.getHeadRole();
+				
+				final String convretedToNERText = POSTagger.runPOSTaggerWithNoNER(NERTagger.runTagger(candicateText));
+				final String replaceWordsWithTags = POSTagger.replaceWordsWithTagsButNotNER(convretedToNERText,candicateText);
+				
+				final Set<Category> categories = generatePOSDictionary.get(replaceWordsWithTags);
+				if (categories == null) {
+					recall.addFalseNegative();
+				} else {
+					final boolean hasIntesection = categories.contains(category);
+					if (hasIntesection) {
+						precision.addTruePositive();
+						recall.addTruePositive();
+					} else {
+						precision.addFalsePositive();
+					}
+				}
+			}
+
+		}
+		LOG.info("evaluationWithNERPOSDictionaryDictionaryCompletenessTest");
+		LOG.info("Precision= " + precision.getValue());
+		LOG.info("Recall= " + recall.getValue());
+		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
+	}
+	
+	public void evaluationWithNERAndThenPOSDictionaryDictionaryCompletenessTest() {
+		resetMetrics();
+		final Map<String, Set<Category>> generateNERDictionary = NERTagger
+				.generateDictionary(originalRoleProvider.getData());
+		final Map<String, Set<Category>> generatePOSDictionary = POSTagger
+				.generatePOSAndNERDictionary(generateNERDictionary);
+		for (final GroundTruthFileModifiedNewStyle groundTruthFile : groundTruthProvider.getRoles()) {
+			for(Role entry:groundTruthFile.getRoles()){
+				final Category category = Category.resolve(entry.getXmlAttributes().get("type"));
+				final String candicateText = entry.getHeadRole();
+				
+				final String convretedToNERText = POSTagger.runPOSTaggerWithNoNER(NERTagger.runTagger(candicateText));
+				final String replaceWordsWithTags = POSTagger.replaceWordsWithTagsButNotNER(convretedToNERText,candicateText).toLowerCase();
+				
+				final Set<Category> categories = generatePOSDictionary.get(replaceWordsWithTags);
+				if (categories == null) {
+					recall.addFalseNegative();
+				} else {
+					final boolean hasIntesection = categories.contains(category);
+					if (hasIntesection) {
+						precision.addTruePositive();
+						recall.addTruePositive();
+					} else {
+						precision.addFalsePositive();
+					}
+				}
+			}
+
+		}
+		LOG.info("evaluationWithNERPOSDictionaryDictionaryCompletenessTest");
+		LOG.info("Precision= " + precision.getValue());
+		LOG.info("Recall= " + recall.getValue());
+		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
+		
+	}
+	
+	public void exactMatchContainEvaluationWithOriginalDictionaryDictionaryCompletenessTest() {
+		resetMetrics();
+		for (final GroundTruthFileModifiedNewStyle groundTruthFile : groundTruthProvider.getRoles()) {
+			for(Role entry:groundTruthFile.getRoles()){
+				final Category category = Category.resolve(entry.getXmlAttributes().get("type"));
+				final String candicateText = entry.getHeadRole();
+				final Set<Category> categories = originalRoleProvider.getData().get(candicateText);
+
+				if (categories != null) {
+					if(categories.contains(category)){
+						precision.addTruePositive();
+						recall.addTruePositive();
+					}else{
+						precision.addFalsePositive();
+					}
+				} else {
+					final Set<String> allRoles = originalRoleProvider.getData().keySet();
+					boolean found = false;
+					for (String role : allRoles) {
+						final Pattern pattern = Pattern.compile("(?i)" + candicateText);
+						final Matcher matcher = pattern.matcher(role);
+						if (matcher.find()) {
+							precision.addTruePositive();
+							recall.addTruePositive();
+							found = true;
+							break;
+						}
+					}
+					if (!found) {
+						recall.addFalseNegative();
+					}
+				}
+			}
+		}		
+		LOG.info("exactMatchContainEvaluationWithOriginalDictionaryDictionaryCompletenessTest");
+		LOG.info("Precision= " + precision.getValue());
+		LOG.info("Recall= " + recall.getValue());
+		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
+		LOG.info("--------------------------------------------");
+	}
 
 	/**
 	 * Working
@@ -95,19 +272,20 @@ public class EvaluatorFullTextNewStyle {
 							matcher.end());
 					if (tagPositions.alreadyExist(candicatePosition)) {
 						continue;
-					}
-					tagPositions.add(candicatePosition);
+					}					
 					groundTruthFileCopy.clear();
 					groundTruthFileCopy.addAll(groundTruthFileCopyTemp);
 					boolean found = false;
 					for (final Role role : groundTruthFileCopy) {
 						if (hasPositionOverlapByToken(GroundTruthParserModifiedNewStyle.getTokenNumberStanfordTokenizer(
 								originalFullText, candicatePosition), role.getRolePhaseTokenPosition())) {
-							if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							//if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							if (findHeadRole(foundRoleInText,role.getHeadRole())) {
 								precision.addTruePositive();
 								recall.addTruePositive();
 								groundTruthFileCopyTemp.remove(role);
 								found = true;
+								tagPositions.add(candicatePosition);
 								break;
 							} else {
 								precision.addFalsePositive();
@@ -130,6 +308,15 @@ public class EvaluatorFullTextNewStyle {
 		LOG.info("Recall= " + recall.getValue());
 		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
 		LOG.info("--------------------------------------------");
+	}
+
+	private boolean findHeadRole(String foundRoleInText, String headRole) {
+		final Pattern pattern = Pattern.compile("(?i)" +headRole);
+		final Matcher matcher = pattern.matcher(foundRoleInText);
+		if (matcher.find()) {
+			return true;
+		}
+		return false;
 	}
 
 	private boolean hasPositionOverlapByToken(Position candicatePosition, Position rolePhasePosition) {
@@ -185,14 +372,14 @@ public class EvaluatorFullTextNewStyle {
 					if (tagPositions.alreadyExist(candicatePosition)) {
 						continue;
 					}
-					tagPositions.add(candicatePosition);
 					groundTruthFileCopy.clear();
 					groundTruthFileCopy.addAll(groundTruthFileCopyTemp);
 					boolean found = false;
 					for (final Role role : groundTruthFileCopy) {
 						if (hasPositionOverlapByToken(GroundTruthParserModifiedNewStyle.getTokenNumberStanfordTokenizer(
 								originalFullText, candicatePosition), role.getRolePhaseTokenPosition())) {
-							if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							//if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							if (findHeadRole(foundRoleInText,role.getHeadRole())) {	
 								final Category category = Category.resolve(role.getXmlAttributes().get("type"));
 								final Set<Category> intesection = hasIntersection(
 										new HashSet<>(Arrays.asList(category)), dictionaryCategories);
@@ -201,8 +388,10 @@ public class EvaluatorFullTextNewStyle {
 									recall.addTruePositive();
 									groundTruthFileCopyTemp.remove(role);
 									found = true;
+									tagPositions.add(candicatePosition);
 									break;
 								} else {
+									System.err.println(foundRoleInText+" "+category+" "+dictionaryCategories+" "+dictionaryRole);
 									precision.addFalsePositive();
 									found = true;
 									break;
@@ -258,7 +447,6 @@ public class EvaluatorFullTextNewStyle {
 			for (final Entry<String, Set<Category>> roleEntity : generateNERDictionary.entrySet()) {
 
 				final String dictionaryRole = roleEntity.getKey();
-
 				/**
 				 * Ignoring all the tags which is only 1 word and we know that
 				 * they are not a role
@@ -276,20 +464,23 @@ public class EvaluatorFullTextNewStyle {
 					if (tagPositions.alreadyExist(candicatePosition)) {
 						continue;
 					}
-					tagPositions.add(candicatePosition);
+					final Position tokenNumberStanfordTokenizerPosition = GroundTruthParserModifiedNewStyle
+							.getTokenNumberStanfordTokenizer(taggedFullText, candicatePosition);
+					//System.out.println(tokenNumberStanfordTokenizerPosition);
 					groundTruthFileCopy.clear();
 					groundTruthFileCopy.addAll(groundTruthFileCopyTemp);
 					boolean found = false;
 					for (final Role role : groundTruthFileCopy) {
-						final Position tokenNumberStanfordTokenizerPosition = GroundTruthParserModifiedNewStyle
-								.getTokenNumberStanfordTokenizer(taggedFullText, candicatePosition);
+						//System.err.println(role.getRolePhrase()+" = "+role.getRolePhaseTokenPosition());
 						if (hasPositionOverlapByToken(tokenNumberStanfordTokenizerPosition,
 								role.getRolePhaseTokenPosition())) {
-							if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							//if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							if (findHeadRole(foundRoleInText,role.getHeadRole())) {	
 								precision.addTruePositive();
 								recall.addTruePositive();
 								groundTruthFileCopyTemp.remove(role);
 								found = true;
+								tagPositions.add(candicatePosition);
 								break;
 							} else {
 								precision.addFalsePositive();
@@ -360,7 +551,8 @@ public class EvaluatorFullTextNewStyle {
 								.getTokenNumberStanfordTokenizer(taggedFullText, candicatePosition);
 						if (hasPositionOverlapByToken(tokenNumberStanfordTokenizerPosition,
 								role.getRolePhaseTokenPosition())) {
-							if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							//if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							if (findHeadRole(foundRoleInText,role.getHeadRole())) {
 								final Category category = Category.resolve(role.getXmlAttributes().get("type"));
 								final Set<Category> intesection = hasIntersection(
 										new HashSet<>(Arrays.asList(category)), dictionaryCategories);
@@ -482,7 +674,12 @@ public class EvaluatorFullTextNewStyle {
 								.getTokenNumberStanfordTokenizer(taggedFullTextNERPOS, candicatePosition);
 						if (hasPositionOverlapByToken(tokenNumberStanfordTokenizerPosition,
 								role.getRolePhaseTokenPosition())) {
-							if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							
+							final String convretedToNERText = POSTagger.runPOSTaggerWithNoNER(NERTagger.runTagger(role.getHeadRole()));
+							final String replaceWordsWithTags = POSTagger.replaceWordsWithTagsButNotNER(convretedToNERText,role.getHeadRole());
+							
+							//if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							if (findHeadRole(foundRoleInText,replaceWordsWithTags)) {
 								precision.addTruePositive();
 								recall.addTruePositive();
 								groundTruthFileCopyTemp.remove(role);
@@ -594,7 +791,12 @@ public class EvaluatorFullTextNewStyle {
 								.getTokenNumberStanfordTokenizer(taggedFullTextNERPOS, candicatePosition);
 						if (hasPositionOverlapByToken(tokenNumberStanfordTokenizerPosition,
 								role.getRolePhaseTokenPosition())) {
-							if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							
+							final String convretedToNERText = POSTagger.runPOSTaggerWithNoNER(NERTagger.runTagger(role.getHeadRole()));
+							final String replaceWordsWithTags = POSTagger.replaceWordsWithTagsButNotNER(convretedToNERText,role.getHeadRole());
+							
+							//if (foundRoleInText.toLowerCase().contains(role.getHeadRole().toLowerCase())) {
+							if (findHeadRole(foundRoleInText,replaceWordsWithTags)) {
 								final Category category = Category.resolve(role.getXmlAttributes().get("type"));
 								final Set<Category> intesection = hasIntersection(
 										new HashSet<>(Arrays.asList(category)), dictionaryCategories);
@@ -836,4 +1038,6 @@ public class EvaluatorFullTextNewStyle {
 		LOG.info("FMeasure= " + new FMeasure(precision.getValue(), recall.getValue()).getValue());
 		LOG.info("--------------------------------------------");
 	}
+
+	
 }

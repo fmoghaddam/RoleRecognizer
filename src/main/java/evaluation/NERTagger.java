@@ -21,13 +21,12 @@ public class NERTagger {
 
 	final static String model1 = "src/main/resources/nermodel/english.all.3class.distsim.crf.ser.gz";
 	final static String model2 = "src/main/resources/nermodel/english.conll.4class.distsim.crf.ser.gz";
-	final static String model3 = "src/main/resources/nermodel/english.muc.7class.distsim.crf.ser.gz";
+	//final static String model3 = "src/main/resources/nermodel/english.muc.7class.distsim.crf.ser.gz";
 	static NERClassifierCombiner classifier;
 	static {
 		try {
-			classifier = new NERClassifierCombiner(model1, model2, model3);
+			classifier = new NERClassifierCombiner(model1, model2);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
