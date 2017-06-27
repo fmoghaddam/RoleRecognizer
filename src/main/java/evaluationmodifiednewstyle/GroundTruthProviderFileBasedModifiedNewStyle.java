@@ -2,7 +2,7 @@ package evaluationmodifiednewstyle;
 
 import java.io.File;
 
-public class GroundTruthProviderFileBasedModifiedNewStyle extends GroundTruchProviderModifiedNewStyle {
+public class GroundTruthProviderFileBasedModifiedNewStyle extends GroundTruthProviderModifiedNewStyle {
 	private static final String DATA_FOLDER = "groundTruth";
 
 	@Override

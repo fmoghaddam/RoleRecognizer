@@ -2,7 +2,6 @@ package evaluationmodifiednewstyle;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,6 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-import evaluation.GroundTruthFile;
 import evaluation.NERTagger;
 import evaluation.POSTagger;
 import main.RoleListProvider;
@@ -27,7 +25,6 @@ import model.Position;
 import model.Role;
 import model.TagPosition;
 import model.TagPositions;
-import util.Tuple;
 
 public class EvaluatorFullTextNewStyle {
 
@@ -37,7 +34,7 @@ public class EvaluatorFullTextNewStyle {
 	final Recall recall;
 
 	final RoleListProvider originalRoleProvider;
-	final GroundTruchProviderModifiedNewStyle groundTruthProvider;
+	final GroundTruthProviderModifiedNewStyle groundTruthProvider;
 
 	public EvaluatorFullTextNewStyle() throws IOException {
 
@@ -50,30 +47,9 @@ public class EvaluatorFullTextNewStyle {
 		originalRoleProvider.loadRoles();
 		groundTruthProvider.loadDate();
 
-		printGroundTruthStatistics(groundTruthProvider.getRoles());
+		groundTruthProvider.printStatisticRolePhrase();
 	}
 
-	static Map<Category, Integer> printGroundTruthStatistics(Set<GroundTruthFileModifiedNewStyle> groundTruthes) {
-		final Map<Category, Integer> statistic = new HashMap<>();
-		for (final GroundTruthFileModifiedNewStyle groundTruth : groundTruthes) {
-			groundTruth.getRoles().forEach(p -> {
-				final Category resolveCategory = Category.resolve(p.getXmlAttributes().get("type").toLowerCase());
-				final Integer value = statistic.get(resolveCategory);
-				if (value == null) {
-					statistic.put(resolveCategory, 1);
-				} else {
-					statistic.put(resolveCategory, value + 1);
-				}
-			});
-		}
-		LOG.info("-------------------------------------");
-		for (Entry<Category, Integer> entry : statistic.entrySet()) {
-			LOG.info(entry.getKey() + "==" + entry.getValue());
-		}
-		LOG.info("-------------------------------------");
-		return statistic;
-	}
-	
 	public void exactMatchEvaluationWithOriginalDictionaryDictionaryCompletenessTest() {
 		resetMetrics();
 		for (final GroundTruthFileModifiedNewStyle groundTruthFile : groundTruthProvider.getRoles()) {
