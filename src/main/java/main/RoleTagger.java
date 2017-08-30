@@ -29,9 +29,12 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
 import model.Category;
+import model.NerTag;
 import model.TagPosition;
 import model.TagPositions;
 import util.ColorUtil;
+import util.MapUtil;
+import util.NERTagger;
 
 @Theme("VaadinTest")
 public class RoleTagger extends UI {
@@ -71,16 +74,16 @@ public class RoleTagger extends UI {
 		final CheckBox enableTaggedText = new CheckBox("Show Annotated Text");
 		enableTaggedText.setValue(false);
 
-		final CheckBox enableAidaText = new CheckBox("Show Annotated Text For AIDA");
-		enableAidaText.setValue(false);
-
 		final CheckBox enableChart = new CheckBox("Show Frequency Chart");
+		enableChart.setValue(false);
+		
+		final CheckBox enableNER = new CheckBox("Use NER");
 		enableChart.setValue(false);
 
 		buttomLayout.addComponent(annotateButton);
 		buttomLayout.addComponent(enableChart);
 		buttomLayout.addComponent(enableTaggedText);
-		buttomLayout.addComponent(enableAidaText);
+		buttomLayout.addComponent(enableNER);
 
 		final Label annotatedResult = new Label("", ContentMode.TEXT);
 		annotatedResult.setVisible(false);
@@ -95,23 +98,30 @@ public class RoleTagger extends UI {
 			annotatedResult.setVisible(enableTaggedText.getValue());
 		});
 
-		enableAidaText.addValueChangeListener(event -> {
-			annotatedAidaResult.setVisible(enableAidaText.getValue());
-		});
-
 		enableChart.addValueChangeListener(event -> {
 			chart.setVisible(enableChart.getValue());
 		});
 
 		annotateButton.addClickListener(event -> {
-			tagPositions.reset();
-			final String annotatedText = annotateText(textArea.getValue(), provider.getData());
-			colorfullResult.setValue(addColor(annotatedText));
-			annotatedResult.setValue(annotatedText);
-			annotatedAidaResult.setValue(convertToAidaNotation(annotatedText));
-			legend.setVisible(true);
-			chart.configure(createChartConfiguration(annotatedText));
-			chart.refreshData();
+			if(enableNER.getValue()){
+				tagPositions.reset();
+				final String annotatedText = annotateTextWihtNER(textArea.getValue(), provider.getData());
+				colorfullResult.setValue(addColor(annotatedText));
+				annotatedResult.setValue(annotatedText);
+				legend.setVisible(true);
+				chart.configure(createChartConfiguration(annotatedText));
+				chart.refreshData();
+
+			}
+			else{
+				tagPositions.reset();
+				final String annotatedText = annotateText(textArea.getValue(), provider.getData());
+				colorfullResult.setValue(addColor(annotatedText));
+				annotatedResult.setValue(annotatedText);
+				legend.setVisible(true);
+				chart.configure(createChartConfiguration(annotatedText));
+				chart.refreshData();
+			}
 		});
 
 		mainLayout.addComponent(
@@ -125,10 +135,167 @@ public class RoleTagger extends UI {
 		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
 		mainLayout.addComponent(new Label("<Strong>Annotated Text:</Strong>", ContentMode.HTML));
 		mainLayout.addComponent(annotatedResult);
-		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
-		mainLayout.addComponent(new Label("<Strong>Annotated Text For AIDA:</Strong>", ContentMode.HTML));
-		mainLayout.addComponent(annotatedAidaResult);
-		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
+	}
+
+	private String annotateTextWihtNER(String text, Map<String, Set<Category>> map) {
+		String result = new String(text);
+		
+		final Map<Integer, NerTag> nerStatistic = NERTagger.nerXmlParser(NERTagger.runTaggerXML(result));		
+		final String resultNer = NERTagger.runTaggerString(result);
+		
+		final Map<String, Set<Category>> generatedNerDictionary = generateNerDictionary(map);
+		
+		for (final Entry<String, Set<Category>> roleEntity : generatedNerDictionary.entrySet()) {
+			final List<Category> roleCategory = new ArrayList<>(roleEntity.getValue());
+			
+			final String role = roleEntity.getKey().replaceAll("\\.", "\\\\.");
+			if(role.charAt(0)=='<' && role.charAt(role.length()-1)=='>'){
+				continue;
+			}
+			if(role.equalsIgnoreCase("the <LOCATION>") || 
+					role.equalsIgnoreCase("The <ORGANIZATION>")){
+				continue;
+			}
+			String regexPattern = "(?im)";
+			if(role.charAt(0)!='<'){
+				regexPattern +="\\b";
+			}
+			regexPattern +=role;
+			if(role.charAt(role.length()-1)!='>'){
+				regexPattern +="\\b";
+			}
+			
+			final Pattern pattern = Pattern.compile("(?im)" +regexPattern);
+			final Matcher matcher = pattern.matcher(resultNer);
+			final Set<String> visitedRoles = new HashSet<>();
+			while (matcher.find()) {
+				final String nerRole = matcher.group(0);
+				TagPosition tp = new TagPosition(nerRole,matcher.start(), matcher.end());
+				tp = convertPosition(tp,nerStatistic);
+				final String nativeRole = result.substring(tp.getStartIndex(), tp.getEndIndex());
+				if (tagPositions.alreadyExist(tp)) {
+					continue;
+				}
+				if (visitedRoles.contains(nerRole)) {
+					continue;
+				}
+				visitedRoles.add(nerRole);
+
+				tagPositions.add(tp);
+				if (roleCategory.size() == 1) {
+					final String startTag = "<" + roleCategory.get(0).name() + ">";
+					final String endTag = "</" + roleCategory.get(0).name() + ">";
+					result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
+				} else {
+					String startTag = "";
+					String endTag = "";
+
+					final int stringLength = nativeRole.length();
+					if (roleCategory.size() > stringLength) {
+						String replaceText = "";
+						for (final Category cat : roleCategory) {
+							startTag = "<" + cat.name() + ">";
+							endTag = "</" + cat.name() + ">";
+							replaceText += startTag + nativeRole + endTag;
+						}
+						result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+					} else {
+						String replaceText = new String(nativeRole);
+						int beginIndex = 0;
+						int endIndex = stringLength / roleCategory.size();
+						for (final Category cat : roleCategory) {
+							startTag = "<" + cat.name() + ">";
+							endTag = "</" + cat.name() + ">";
+							final String substring = nativeRole.substring(beginIndex, endIndex);
+							replaceText = replaceText.replace(substring, startTag + substring + endTag);
+							beginIndex = endIndex;
+							endIndex = endIndex + endIndex;
+							final int offset = nativeRole.length() - endIndex;
+							if (offset < stringLength / roleCategory.size()) {
+								endIndex += offset;
+							}
+
+						}
+						result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+					}
+				}
+			}
+		}
+		return result;
+	}
+	
+	private TagPosition convertPosition(TagPosition candicatePosition,  Map<Integer, NerTag> statistic) {
+		final int staticOffset = candicatePosition.getTag().indexOf('<'); 
+		int offset = 0;
+		if(staticOffset==-1){
+			for(Entry<Integer, NerTag> entry:statistic.entrySet()){
+				if((entry.getKey()-offset)>candicatePosition.getStartIndex()){				
+					final int start = candicatePosition.getStartIndex()+offset;
+					final TagPosition result = new TagPosition(candicatePosition.getTag(),start, start+candicatePosition.getLength());
+					return result; 
+				}else{
+					final NerTag tag = entry.getValue();
+					int diff = tag.getEndPosition()-tag.getStartPosition();
+					int tagLength = 2+tag.getNerTag().text.length();
+					if(diff>=tagLength){
+						offset += Math.abs(diff-tagLength);
+					}else{
+						offset -= Math.abs(diff-tagLength);
+					}
+				}
+			}
+			final int start = candicatePosition.getStartIndex()+offset;
+			final TagPosition result = new TagPosition(candicatePosition.getTag(),start, start+candicatePosition.getLength());
+			return result;
+		}
+		else{
+			for(Entry<Integer, NerTag> entry:statistic.entrySet()){
+				if((entry.getKey()-offset)==candicatePosition.getStartIndex()+staticOffset){				
+					final int start = entry.getKey()-staticOffset;
+					//final TagPosition result = new TagPosition(candicatePosition.getTag(),start, start+candicatePosition.getLength()-1);
+					final TagPosition result = new TagPosition(candicatePosition.getTag(),start, start+entry.getValue().getEndPosition());
+					return result; 
+				}else{
+					final NerTag tag = entry.getValue();
+					int diff = tag.getEndPosition()-tag.getStartPosition();
+					int tagLength = 2+tag.getNerTag().text.length();
+					if(diff>=tagLength){
+						offset += Math.abs(diff-tagLength);
+					}else{
+						offset -= Math.abs(diff-tagLength);
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+	
+	private Map<String, Set<Category>> generateNerDictionary(Map<String, Set<Category>> originalDictionary) {
+		Map<String, Set<Category>> nerDictinary = new LinkedHashMap<>();
+
+		for (Entry<String, Set<Category>> entry : originalDictionary.entrySet()) {
+			final String text = entry.getKey();
+			final Set<Category> categories = entry.getValue();
+			try {
+				final String nerTaggedResult = NERTagger.runTaggerString(text);
+				final Set<Category> set = nerDictinary.get(nerTaggedResult);
+				if (set == null) {
+					nerDictinary.put(nerTaggedResult, new HashSet<>(categories));
+				} else {
+					Set<Category> newSet = new HashSet<>(set);
+					newSet.addAll(categories);
+					nerDictinary.put(nerTaggedResult, newSet);
+				}
+				//System.err.println(nerTaggedResult);
+			} catch (ClassCastException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		nerDictinary = MapUtil.sortByKeyDescendingNumberOfWords(nerDictinary);
+		//printFullStatistic(nerDictinary);
+		return nerDictinary;
 	}
 
 	private ChartConfig createChartConfiguration(final String annotatedText) {
@@ -173,15 +340,6 @@ public class RoleTagger extends UI {
 			statistic.put(entry.getKey(), entry.getValue() / sumOfTags);
 		}
 		return statistic;
-	}
-
-	private String convertToAidaNotation(final String text) {
-		String result = new String(text);
-		for (Entry<Category, String> colorCatEnity : ColorUtil.colorMap.entrySet()) {
-			result = result.replaceAll("<" + colorCatEnity.getKey().name() + ">", "[[");
-			result = result.replaceAll("</" + colorCatEnity.getKey().name() + ">", "]]");
-		}
-		return result;
 	}
 
 	private Label createColorIndicator() {

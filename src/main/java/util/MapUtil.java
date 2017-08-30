@@ -99,4 +99,29 @@ public class MapUtil {
 		}
 		return sortedMap;
 	}
+	
+	/**
+	 * Sort a Map by key in descending order by considering number of words
+	 ** 
+	 * @param map
+	 * @return a sorted map
+	 */
+	public static <K, V extends Comparable<? super V>> Map<String, Set<V>> sortByKeyDescendingNumberOfWords(
+			Map<String, Set<V>> map) {
+		List<Map.Entry<String, Set<V>>> list = new LinkedList<Map.Entry<String, Set<V>>>(map.entrySet());
+		Collections.sort(list, new Comparator<Map.Entry<String, Set<V>>>() {
+			public int compare(Map.Entry<String, Set<V>> o1, Map.Entry<String, Set<V>> o2) {
+				final int o2Size = o2.getKey().split(" ").length;
+				final int o1Size = o1.getKey().split(" ").length;
+				
+				return (o2Size - o1Size);
+			}
+		});
+
+		LinkedHashMap<String, Set<V>> result = new LinkedHashMap<String, Set<V>>();
+		for (Map.Entry<String, Set<V>> entry : list) {
+			result.put(entry.getKey(), entry.getValue());
+		}
+		return result;
+	}
 }
