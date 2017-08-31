@@ -53,7 +53,7 @@ import util.NERTagger;
 @Theme("VaadinTest")
 public class RoleTagger extends UI {
 
-	private static final String VERIOSN = "1.4";
+	private static final String VERIOSN = "1.5";
 	private static final long serialVersionUID = 5924433731101343240L;
 	@SuppressWarnings("unused")
 	private static Logger LOG = Logger.getLogger(RoleTagger.class);
