@@ -1,6 +1,7 @@
 package main;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import com.vaadin.ui.VerticalLayout;
 
 import model.Category;
 import model.NerTag;
+import model.Order;
 import model.TagPosition;
 import model.TagPositions;
 import util.ColorUtil;
@@ -56,8 +58,8 @@ public class RoleTagger extends UI {
 		mainLayout.setMargin(true);
 		setContent(mainLayout);
 
-		final RoleListProvider provider = new RoleListProviderDummy();
-		//final RoleListProvider provider = new RoleListProviderFileBased();
+		//final RoleListProvider provider = new RoleListProviderDummy();
+		final RoleListProvider provider = new RoleListProviderFileBased();
 		provider.loadRoles();
 
 		final TextArea textArea = createTextArea();
@@ -138,16 +140,18 @@ public class RoleTagger extends UI {
 	}
 
 	private String annotateTextWihtNER(String text, Map<String, Set<Category>> map) {
+		List<TagPosition> replacements = new ArrayList<>();
+
 		String result = new String(text);
-		
+
 		final Map<Integer, NerTag> nerStatistic = NERTagger.nerXmlParser(NERTagger.runTaggerXML(result));		
 		final String resultNer = NERTagger.runTaggerString(result);
-		
+
 		final Map<String, Set<Category>> generatedNerDictionary = generateNerDictionary(map);
-		
+
 		for (final Entry<String, Set<Category>> roleEntity : generatedNerDictionary.entrySet()) {
 			final List<Category> roleCategory = new ArrayList<>(roleEntity.getValue());
-			
+
 			final String role = roleEntity.getKey().replaceAll("\\.", "\\\\.");
 			if(role.charAt(0)=='<' && role.charAt(role.length()-1)=='>'){
 				continue;
@@ -164,7 +168,7 @@ public class RoleTagger extends UI {
 			if(role.charAt(role.length()-1)!='>'){
 				regexPattern +="\\b";
 			}
-			
+
 			final Pattern pattern = Pattern.compile("(?im)" +regexPattern);
 			final Matcher matcher = pattern.matcher(resultNer);
 			final Set<String> visitedRoles = new HashSet<>();
@@ -183,9 +187,16 @@ public class RoleTagger extends UI {
 
 				tagPositions.add(tp);
 				if (roleCategory.size() == 1) {
+
+
+
+
 					final String startTag = "<" + roleCategory.get(0).name() + ">";
 					final String endTag = "</" + roleCategory.get(0).name() + ">";
-					result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
+
+					replacements.add(new TagPosition(startTag+nativeRole+endTag, tp.getStartIndex(), tp.getEndIndex()));
+
+					//result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
 				} else {
 					String startTag = "";
 					String endTag = "";
@@ -198,7 +209,8 @@ public class RoleTagger extends UI {
 							endTag = "</" + cat.name() + ">";
 							replaceText += startTag + nativeRole + endTag;
 						}
-						result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+						replacements.add(new TagPosition( replaceText, tp.getStartIndex(), tp.getEndIndex()));
+						//result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
 					} else {
 						String replaceText = new String(nativeRole);
 						int beginIndex = 0;
@@ -216,15 +228,53 @@ public class RoleTagger extends UI {
 							}
 
 						}
-						result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+						replacements.add(new TagPosition( replaceText, tp.getStartIndex(), tp.getEndIndex()));
+						//result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
 					}
 				}
 			}
 		}
+		replacements = sort(replacements,Order.ASC);
+		//Sort replacement by start position
+		int offset= 0;
+		for(int i=0;i<replacements.size();i++) {
+			final TagPosition p = replacements.get(i);
+			result = result.substring(0, p.getStartIndex()+offset) + p.getTag()+result.substring(p.getEndIndex()+offset);
+			offset+=p.getTag().length()-(p.getTag().lastIndexOf('<')-p.getTag().indexOf('>'))+1;
+		}
 		return result;
 	}
+
+	private static List<TagPosition> sort(List<TagPosition> replacements, Order asc) {
+        TagPosition[] array = new TagPosition[replacements.size()];
+		array = replacements.toArray(array);
+		
+		for(int i=0;i<replacements.size();i++) {
+			for(int j=i+1;j<replacements.size();j++) {
+				switch (asc) {
+				case ASC:
+					if(array[i].getStartIndex()>array[j].getStartIndex()) {
+						TagPosition temp = array[i];
+						array[i] = array[j];
+						array[j] = temp;
+					}
+					break;
+				case DESC:
+					if(array[i].getStartIndex()<array[j].getStartIndex()) {
+						TagPosition temp = array[i];
+						array[i] = array[j];
+						array[j] = temp;
+					}
+					break;
+				}
+			}
+		}
+		return Arrays.asList(array);
+	}
+
 	
-	private TagPosition convertPosition(TagPosition candicatePosition,  Map<Integer, NerTag> statistic) {
+	
+	private static TagPosition convertPosition(TagPosition candicatePosition, final Map<Integer, NerTag> statistic) {
 		final int staticOffset = candicatePosition.getTag().indexOf('<'); 
 		int offset = 0;
 		if(staticOffset==-1){
@@ -252,8 +302,17 @@ public class RoleTagger extends UI {
 			for(Entry<Integer, NerTag> entry:statistic.entrySet()){
 				if((entry.getKey()-offset)==candicatePosition.getStartIndex()+staticOffset){				
 					final int start = entry.getKey()-staticOffset;
-					//final TagPosition result = new TagPosition(candicatePosition.getTag(),start, start+candicatePosition.getLength()-1);
-					final TagPosition result = new TagPosition(candicatePosition.getTag(),start, start+entry.getValue().getEndPosition());
+					
+					final NerTag tag = entry.getValue();
+					int diff = tag.getEndPosition()-tag.getStartPosition();
+					int tagLength = 2+tag.getNerTag().text.length();
+					if(diff>=tagLength){
+						offset += Math.abs(diff-tagLength);
+					}else{
+						offset -= Math.abs(diff-tagLength);
+					}
+
+					final TagPosition result = new TagPosition(candicatePosition.getTag(),start, start+candicatePosition.getLength()+offset);
 					return result; 
 				}else{
 					final NerTag tag = entry.getValue();
@@ -267,10 +326,8 @@ public class RoleTagger extends UI {
 				}
 			}
 		}
-
 		return null;
 	}
-	
 	private Map<String, Set<Category>> generateNerDictionary(Map<String, Set<Category>> originalDictionary) {
 		Map<String, Set<Category>> nerDictinary = new LinkedHashMap<>();
 

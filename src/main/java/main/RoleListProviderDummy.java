@@ -29,6 +29,7 @@ public class RoleListProviderDummy extends RoleListProvider {
 		roleMap.put("The king", new HashSet<>(Arrays.asList(Category.KING_TAG, Category.CEO_TAG, Category.POPE_TAG)));
 		roleMap.put("AB", new HashSet<>(Arrays.asList(Category.KING_TAG, Category.CEO_TAG, Category.POPE_TAG)));
 		roleMap.put("king", new HashSet<>(Arrays.asList(Category.KING_TAG, Category.CEO_TAG)));
+		roleMap.put("CEO", new HashSet<>(Arrays.asList(Category.CEO_TAG)));
 		// roleMap.put("queen", new
 		// HashSet<>(Arrays.asList(Category.KING_TAG)));
 		// roleMap.put("CEO", new HashSet<>(Arrays.asList(Category.CEO_TAG)));
