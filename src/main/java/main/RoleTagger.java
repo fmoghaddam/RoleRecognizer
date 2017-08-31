@@ -25,11 +25,13 @@ import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
 import model.Category;
+import model.DataSourceType;
 import model.NerTag;
 import model.Order;
 import model.TagPosition;
@@ -41,7 +43,7 @@ import util.NERTagger;
 @Theme("VaadinTest")
 public class RoleTagger extends UI {
 
-	private static final String VERIOSN = "1.3";
+	private static final String VERIOSN = "1.4";
 	private static final long serialVersionUID = 5924433731101343240L;
 	@SuppressWarnings("unused")
 	private static Logger LOG = Logger.getLogger(RoleTagger.class);
@@ -60,7 +62,7 @@ public class RoleTagger extends UI {
 
 		//final RoleListProvider provider = new RoleListProviderDummy();
 		final RoleListProvider provider = new RoleListProviderFileBased();
-		provider.loadRoles();
+		provider.loadRoles(DataSourceType.WIKIPEDIA);
 
 		final TextArea textArea = createTextArea();
 
@@ -82,11 +84,37 @@ public class RoleTagger extends UI {
 		final CheckBox enableNER = new CheckBox("Use NER");
 		enableChart.setValue(false);
 
+		final CheckBox selectWikipedia = new CheckBox("Use Wikipedia");
+		selectWikipedia.setValue(true);
+		
+		final CheckBox selectWikidata = new CheckBox("Use Wikidata");
+		selectWikidata.setValue(false);
+		
+		selectWikipedia.addValueChangeListener(event -> {
+			if(!selectWikipedia.getValue()&&!selectWikidata.getValue()){
+				Notification.show("At least one data source should be seletced",
+		                  "",
+		                  Notification.Type.HUMANIZED_MESSAGE);
+				selectWikipedia.setValue(true);
+			}
+		});
+		
+		selectWikidata.addValueChangeListener(event -> {
+			if(!selectWikipedia.getValue()&&!selectWikidata.getValue()){
+				Notification.show("At least one data source should be seletced",
+		                  "",
+		                  Notification.Type.HUMANIZED_MESSAGE);
+				selectWikidata.setValue(true);
+			}
+		});
+		
 		buttomLayout.addComponent(annotateButton);
 		buttomLayout.addComponent(enableChart);
 		buttomLayout.addComponent(enableTaggedText);
 		buttomLayout.addComponent(enableNER);
-
+		buttomLayout.addComponent(selectWikipedia);
+		buttomLayout.addComponent(selectWikidata);
+		
 		final Label annotatedResult = new Label("", ContentMode.TEXT);
 		annotatedResult.setVisible(false);
 
@@ -105,6 +133,13 @@ public class RoleTagger extends UI {
 		});
 
 		annotateButton.addClickListener(event -> {
+			if(selectWikidata.getValue()&&selectWikipedia.getValue()){
+				provider.loadRoles(DataSourceType.ALL);
+			}else if(selectWikidata.getValue()&&!selectWikipedia.getValue()){
+				provider.loadRoles(DataSourceType.WIKIDATA);
+			}else if(!selectWikidata.getValue()&&selectWikipedia.getValue()){
+				provider.loadRoles(DataSourceType.WIKIPEDIA);
+			}
 			if(enableNER.getValue()){
 				tagPositions.reset();
 				final String annotatedText = annotateTextWihtNER(textArea.getValue(), provider.getData());
@@ -113,7 +148,6 @@ public class RoleTagger extends UI {
 				legend.setVisible(true);
 				chart.configure(createChartConfiguration(annotatedText));
 				chart.refreshData();
-
 			}
 			else{
 				tagPositions.reset();

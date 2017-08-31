@@ -7,6 +7,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import model.Category;
+import model.DataSourceType;
 import model.Order;
 import util.MapUtil;
 
@@ -19,7 +20,7 @@ public abstract class RoleListProvider {
 	 * in a descending mode regards to the length of the text and then fill the
 	 * colorutil
 	 */
-	public void loadRoles() {
+	public void loadRoles(DataSourceType dataSourceType) {
 	};
 
 	public void print() {

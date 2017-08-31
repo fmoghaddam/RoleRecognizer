@@ -5,13 +5,14 @@ import java.util.HashSet;
 import java.util.stream.Collectors;
 
 import model.Category;
+import model.DataSourceType;
 import model.Order;
 import util.ColorUtil;
 
 public class RoleListProviderDummy extends RoleListProvider {
 
 	@Override
-	public void loadRoles() {
+	public void loadRoles(DataSourceType dataSource) {
 		// roleMap.put("mr. president", Category.PRESIDENT_TAG);
 		// roleMap.put("President of US", Category.PRESIDENT_TAG);
 		// roleMap.put("President of United States", Category.PRESIDENT_TAG);

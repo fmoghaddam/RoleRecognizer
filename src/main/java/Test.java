@@ -25,6 +25,7 @@ import main.RoleListProviderDummy;
 import main.RoleListProviderFileBased;
 import main.RoleTagger;
 import model.Category;
+import model.DataSourceType;
 import model.NerTag;
 import model.Order;
 import model.TagPosition;
@@ -38,7 +39,7 @@ public class Test {
 	public static void main(String[] args) {
 		// final RoleListProvider provider = new RoleListProviderDummy();
 		final RoleListProvider provider = new RoleListProviderFileBased();
-		provider.loadRoles();
+		provider.loadRoles(DataSourceType.WIKIPEDIA);
 		//the President of Iran talked with CEO of Apple and king of Iran and 
 		System.out.println(annotateTextWihtNER("president of Apple co-founder",
 				provider.getData()));

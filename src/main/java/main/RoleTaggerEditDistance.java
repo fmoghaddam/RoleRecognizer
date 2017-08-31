@@ -32,6 +32,7 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
 import model.Category;
+import model.DataSourceType;
 import model.TagPositions;
 import util.ColorUtil;
 import util.NGrams;
@@ -59,7 +60,7 @@ public class RoleTaggerEditDistance extends UI {
 
 		//final RoleListProvider provider = new RoleListProviderDummy();
 		final RoleListProvider provider = new RoleListProviderFileBased();
-		provider.loadRoles();
+		provider.loadRoles(DataSourceType.WIKIPEDIA);
 
 		final TextArea textArea = createTextArea();
 

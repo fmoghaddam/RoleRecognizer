@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import model.Category;
+import model.DataSourceType;
 import model.Order;
 import util.ColorUtil;
 
@@ -16,18 +17,37 @@ public class RoleListProviderFileBased extends RoleListProvider {
 
 	private static final String DATA_FOLDER = "data";
 
+	public RoleListProviderFileBased() {
+
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see main.RoleListProvider#loadRoles()
 	 */
 	@Override
-	public void loadRoles() {
+	public void loadRoles(DataSourceType dataSourceType) {
+		String dataSubFolder;
+		switch (dataSourceType) {
+		case WIKIPEDIA:
+			dataSubFolder = DATA_FOLDER+File.separator + "wikipedia";
+			break;
+		case WIKIDATA:
+			dataSubFolder = DATA_FOLDER+File.separator + "wikidata";
+			break;
+		case ALL:
+			dataSubFolder = DATA_FOLDER+File.separator + "all";
+			break;
+		default:
+			dataSubFolder = DATA_FOLDER+File.separator + "wikipedia";
+			break;
+		}
 		try {
-			final File[] listOfFiles = new File(DATA_FOLDER).listFiles();
+			final File[] listOfFiles = new File(dataSubFolder).listFiles();
 			for (int j = 0; j < listOfFiles.length; j++) {
 				final String file = listOfFiles[j].getName();
-				BufferedReader br = new BufferedReader(new FileReader(DATA_FOLDER + File.separator + file));
+				BufferedReader br = new BufferedReader(new FileReader(dataSubFolder + File.separator + file));
 				String line;
 				while ((line = br.readLine()) != null) {
 					final Set<Category> categorySet = roleMap.get(line);
