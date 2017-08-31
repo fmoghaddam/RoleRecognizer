@@ -14,10 +14,19 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 
 import com.byteowls.vaadin.chartjs.ChartJs;
+import com.byteowls.vaadin.chartjs.config.BarChartConfig;
 import com.byteowls.vaadin.chartjs.config.ChartConfig;
 import com.byteowls.vaadin.chartjs.config.PieChartConfig;
+import com.byteowls.vaadin.chartjs.config.PolarAreaChartConfig;
+import com.byteowls.vaadin.chartjs.data.BarDataset;
 import com.byteowls.vaadin.chartjs.data.Dataset;
 import com.byteowls.vaadin.chartjs.data.PieDataset;
+import com.byteowls.vaadin.chartjs.data.PolarAreaDataset;
+import com.byteowls.vaadin.chartjs.options.InteractionMode;
+import com.byteowls.vaadin.chartjs.options.Position;
+import com.byteowls.vaadin.chartjs.options.scale.Axis;
+import com.byteowls.vaadin.chartjs.options.scale.LinearScale;
+import com.byteowls.vaadin.chartjs.options.scale.RadialLinearScale;
 import com.vaadin.annotations.Theme;
 import com.vaadin.server.Page;
 import com.vaadin.server.VaadinRequest;
@@ -67,9 +76,17 @@ public class RoleTagger extends UI {
 
 		final TextArea textArea = createTextArea();
 
-		final ChartJs chart = new ChartJs();
-		chart.setVisible(false);
-		chart.setJsLoggingEnabled(true);
+		final ChartJs pieChart = new ChartJs();
+		pieChart.setVisible(false);
+		pieChart.setJsLoggingEnabled(true);
+		
+		final ChartJs barChart = new ChartJs();
+		barChart.setVisible(false);
+		barChart.setJsLoggingEnabled(true);
+		
+		final ChartJs polarChart = new ChartJs();
+		polarChart.setVisible(false);
+		polarChart.setJsLoggingEnabled(true);
 
 		final HorizontalLayout buttomLayout = new HorizontalLayout();
 		buttomLayout.setSpacing(true);
@@ -132,7 +149,9 @@ public class RoleTagger extends UI {
 		});
 
 		enableChart.addValueChangeListener(event -> {
-			chart.setVisible(enableChart.getValue());
+			pieChart.setVisible(enableChart.getValue());
+			barChart.setVisible(enableChart.getValue());
+			polarChart.setVisible(enableChart.getValue());
 		});
 
 		annotateButton.addClickListener(event -> {
@@ -149,8 +168,12 @@ public class RoleTagger extends UI {
 				colorfullResult.setValue(addColor(annotatedText));
 				annotatedResult.setValue(annotatedText);
 				legend.setVisible(true);
-				chart.configure(createChartConfiguration(annotatedText));
-				chart.refreshData();
+				pieChart.configure(createPieChartConfiguration(annotatedText));
+				pieChart.refreshData();
+				barChart.configure(createBarChartConfiguration(annotatedText));
+				barChart.refreshData();
+				polarChart.configure(createPolarChartConfiguration(annotatedText));
+				polarChart.refreshData();
 			}
 			else{
 				tagPositions.reset();
@@ -158,8 +181,12 @@ public class RoleTagger extends UI {
 				colorfullResult.setValue(addColor(annotatedText));
 				annotatedResult.setValue(annotatedText);
 				legend.setVisible(true);
-				chart.configure(createChartConfiguration(annotatedText));
-				chart.refreshData();
+				pieChart.configure(createPieChartConfiguration(annotatedText));
+				pieChart.refreshData();
+				barChart.configure(createBarChartConfiguration(annotatedText));
+				barChart.refreshData();
+				polarChart.configure(createPolarChartConfiguration(annotatedText));
+				polarChart.refreshData();
 			}
 		});
 
@@ -170,10 +197,99 @@ public class RoleTagger extends UI {
 		mainLayout.addComponent(colorfullResult);
 		mainLayout.addComponent(legend);
 		mainLayout.addComponent(new Label("<Strong>Frequency Chart:</Strong>", ContentMode.HTML));
-		mainLayout.addComponent(chart);
+		
+		HorizontalLayout chartsLayout = new HorizontalLayout();
+		chartsLayout.addComponent(pieChart);
+		chartsLayout.addComponent(barChart);
+		chartsLayout.addComponent(polarChart);
+		
+		barChart.setHeight(300, Unit.PIXELS);
+		
+		chartsLayout.setSpacing(true);
+		chartsLayout.setMargin(true);
+		mainLayout.addComponent(chartsLayout);
 		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
 		mainLayout.addComponent(new Label("<Strong>Annotated Text:</Strong>", ContentMode.HTML));
 		mainLayout.addComponent(annotatedResult);
+	}
+
+	private ChartConfig createPolarChartConfiguration(String annotatedText) {
+		final PolarAreaChartConfig config = new PolarAreaChartConfig();
+		final Map<String, Double> statistic = createStatistic(annotatedText);
+        config
+            .data()
+                .labels(statistic.keySet().stream().toArray(String[]::new))
+                .addDataset(new PolarAreaDataset().label("My dataset").backgroundColor())
+                .and();
+
+        config.
+            options()
+                .responsive(true)
+                .title()
+                    .display(true)
+                    .text("Polar Chart")
+                    .and()
+                .scale(new RadialLinearScale().ticks().beginAtZero(true).and().reverse(false))
+                .animation()
+                    .animateScale(true)
+                    .animateRotate(false)
+                    .and()
+               .done();
+
+        for (Dataset<?, ?> ds : config.data().getDatasets()) {
+            final PolarAreaDataset lds = (PolarAreaDataset) ds;
+            final List<Double> data = new ArrayList<>();
+            List<String> colors = new ArrayList<>();
+            for (Entry<String, Double> entry : statistic.entrySet()) {
+    			data.add(entry.getValue());
+    			colors.add(ColorUtil.colorMap.get(Category.valueOf(entry.getKey())));
+    		}
+            lds.backgroundColor(colors.toArray(new String[colors.size()]));
+            
+            lds.dataAsList(data);
+        }
+        return config;
+	}
+
+	private BarChartConfig createBarChartConfiguration(String annotatedText) {
+		final BarChartConfig barConfig = new BarChartConfig();
+		final Map<String, Double> statistic = createStatistic(annotatedText);		
+        barConfig.
+            data()
+                .labels(statistic.keySet().stream().toArray(String[]::new))
+                .addDataset(
+                        new BarDataset().backgroundColor().label("").yAxisID("y-axis-1"))                
+                .and();
+        barConfig.
+            options()
+                .responsive(true)
+                .hover()
+                    .mode(InteractionMode.INDEX)
+                    .intersect(true)
+                    .animationDuration(400)
+                    .and()
+                .title()
+                    .display(true)
+                    .text("Bar Chart")
+                    .and()
+                .scales()
+                    .add(Axis.Y, new LinearScale().display(true).position(Position.LEFT).id("y-axis-1"))
+                    .and()
+               .done();
+        
+        for (Dataset<?, ?> ds : barConfig.data().getDatasets()) {
+        	final BarDataset lds = (BarDataset) ds;
+            final List<Double> data = new ArrayList<>();
+            List<String> colors = new ArrayList<>();
+            for (Entry<String, Double> entry : statistic.entrySet()) {
+    			data.add(entry.getValue());
+    			colors.add(ColorUtil.colorMap.get(Category.valueOf(entry.getKey())));
+    		}
+            lds.backgroundColor(colors.toArray(new String[colors.size()]));
+            lds.dataAsList(data);
+        }
+
+        return barConfig;
 	}
 
 	private String annotateTextWihtNER(String text, Map<String, Set<Category>> map) {
@@ -389,17 +505,16 @@ public class RoleTagger extends UI {
 		}
 		
 		nerDictinary = MapUtil.sortByKeyDescendingNumberOfWords(nerDictinary);
-		//printFullStatistic(nerDictinary);
 		return nerDictinary;
 	}
 
-	private ChartConfig createChartConfiguration(final String annotatedText) {
+	private ChartConfig createPieChartConfiguration(final String annotatedText) {
 		final PieChartConfig config = new PieChartConfig();
 		final Map<String, Double> statistic = createStatistic(annotatedText);
 		config.data().labels(statistic.keySet().stream().toArray(String[]::new))
 				.addDataset(new PieDataset().label("Dataset 1")).and();
 
-		config.options().responsive(true).title().display(true).text("Frequnecy Chart").and().animation()
+		config.options().responsive(true).title().display(true).text("Pie Chart").and().animation()
 				.animateScale(true).animateRotate(true).and().done();
 
 		for (final Dataset<?, ?> ds : config.data().getDatasets()) {
