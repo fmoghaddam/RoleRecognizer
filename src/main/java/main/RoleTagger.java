@@ -187,16 +187,9 @@ public class RoleTagger extends UI {
 
 				tagPositions.add(tp);
 				if (roleCategory.size() == 1) {
-
-
-
-
 					final String startTag = "<" + roleCategory.get(0).name() + ">";
 					final String endTag = "</" + roleCategory.get(0).name() + ">";
-
 					replacements.add(new TagPosition(startTag+nativeRole+endTag, tp.getStartIndex(), tp.getEndIndex()));
-
-					//result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
 				} else {
 					String startTag = "";
 					String endTag = "";
@@ -210,37 +203,44 @@ public class RoleTagger extends UI {
 							replaceText += startTag + nativeRole + endTag;
 						}
 						replacements.add(new TagPosition( replaceText, tp.getStartIndex(), tp.getEndIndex()));
-						//result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
 					} else {
 						String replaceText = new String(nativeRole);
 						int beginIndex = 0;
 						int endIndex = stringLength / roleCategory.size();
+						int step = stringLength / roleCategory.size();
 						for (final Category cat : roleCategory) {
 							startTag = "<" + cat.name() + ">";
 							endTag = "</" + cat.name() + ">";
 							final String substring = nativeRole.substring(beginIndex, endIndex);
 							replaceText = replaceText.replace(substring, startTag + substring + endTag);
 							beginIndex = endIndex;
-							endIndex = endIndex + endIndex;
+							endIndex = endIndex + step;
 							final int offset = nativeRole.length() - endIndex;
 							if (offset < stringLength / roleCategory.size()) {
 								endIndex += offset;
 							}
 
 						}
-						replacements.add(new TagPosition( replaceText, tp.getStartIndex(), tp.getEndIndex()));
-						//result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+						replacements.add(new TagPosition(replaceText, tp.getStartIndex(), tp.getEndIndex()));
 					}
 				}
 			}
 		}
-		replacements = sort(replacements,Order.ASC);
-		//Sort replacement by start position
-		int offset= 0;
-		for(int i=0;i<replacements.size();i++) {
+		replacements = sort(replacements, Order.ASC);
+		int offset = 0;
+		for (int i = 0; i < replacements.size(); i++) {
 			final TagPosition p = replacements.get(i);
-			result = result.substring(0, p.getStartIndex()+offset) + p.getTag()+result.substring(p.getEndIndex()+offset);
-			offset+=p.getTag().length()-(p.getTag().lastIndexOf('<')-p.getTag().indexOf('>'))+1;
+			result = result.substring(0, p.getStartIndex() + offset) + p.getTag()
+					+ result.substring(p.getEndIndex() + offset);
+			
+			final Pattern pattern = Pattern.compile("<[^>]*>");
+			final Matcher matcher = pattern.matcher(p.getTag());
+			int diff = 0;
+			while (matcher.find()) {
+				diff+=matcher.group(0).length();
+			}
+			
+			offset+=diff;
 		}
 		return result;
 	}
@@ -272,62 +272,64 @@ public class RoleTagger extends UI {
 		return Arrays.asList(array);
 	}
 
-	
-	
+
 	private static TagPosition convertPosition(TagPosition candicatePosition, final Map<Integer, NerTag> statistic) {
-		final int staticOffset = candicatePosition.getTag().indexOf('<'); 
+		final int staticOffset = candicatePosition.getTag().indexOf('<');
 		int offset = 0;
-		if(staticOffset==-1){
-			for(Entry<Integer, NerTag> entry:statistic.entrySet()){
-				if((entry.getKey()-offset)>candicatePosition.getStartIndex()){				
-					final int start = candicatePosition.getStartIndex()+offset;
-					final TagPosition result = new TagPosition(candicatePosition.getTag(),start, start+candicatePosition.getLength());
-					return result; 
-				}else{
+		if (staticOffset == -1) {
+			for (Entry<Integer, NerTag> entry : statistic.entrySet()) {
+				if ((entry.getKey() - offset) > candicatePosition.getStartIndex()) {
+					final int start = candicatePosition.getStartIndex() + offset;
+					final TagPosition result = new TagPosition(candicatePosition.getTag(), start,
+							start + candicatePosition.getLength());
+					return result;
+				} else {
 					final NerTag tag = entry.getValue();
-					int diff = tag.getEndPosition()-tag.getStartPosition();
-					int tagLength = 2+tag.getNerTag().text.length();
-					if(diff>=tagLength){
-						offset += Math.abs(diff-tagLength);
-					}else{
-						offset -= Math.abs(diff-tagLength);
+					int diff = tag.getEndPosition() - tag.getStartPosition();
+					int tagLength = 2 + tag.getNerTag().text.length();
+					if (diff >= tagLength) {
+						offset += Math.abs(diff - tagLength);
+					} else {
+						offset -= Math.abs(diff - tagLength);
 					}
 				}
 			}
-			final int start = candicatePosition.getStartIndex()+offset;
-			final TagPosition result = new TagPosition(candicatePosition.getTag(),start, start+candicatePosition.getLength());
+			final int start = candicatePosition.getStartIndex() + offset;
+			final TagPosition result = new TagPosition(candicatePosition.getTag(), start,
+					start + candicatePosition.getLength());
 			return result;
-		}
-		else{
-			for(Entry<Integer, NerTag> entry:statistic.entrySet()){
-				if((entry.getKey()-offset)==candicatePosition.getStartIndex()+staticOffset){				
-					final int start = entry.getKey()-staticOffset;
-					
-					final NerTag tag = entry.getValue();
-					int diff = tag.getEndPosition()-tag.getStartPosition();
-					int tagLength = 2+tag.getNerTag().text.length();
-					if(diff>=tagLength){
-						offset += Math.abs(diff-tagLength);
-					}else{
-						offset -= Math.abs(diff-tagLength);
-					}
+		} else {
+			for (Entry<Integer, NerTag> entry : statistic.entrySet()) {
+				if ((entry.getKey() - offset) == candicatePosition.getStartIndex() + staticOffset) {
+					final int start = entry.getKey() - staticOffset;
 
-					final TagPosition result = new TagPosition(candicatePosition.getTag(),start, start+candicatePosition.getLength()+offset);
-					return result; 
-				}else{
+					 final NerTag tag = entry.getValue();
+					 int diff = tag.getEndPosition()-tag.getStartPosition();
+					 int tagLength = 2+tag.getNerTag().text.length();
+					 if(diff>=tagLength){
+						 offset += Math.abs(diff-tagLength);
+					 }else{
+						 offset -= Math.abs(diff-tagLength);
+					 }
+
+					final TagPosition result = new TagPosition(candicatePosition.getTag(), start,
+							candicatePosition.getEndIndex()+ offset);
+					return result;
+				} else {
 					final NerTag tag = entry.getValue();
-					int diff = tag.getEndPosition()-tag.getStartPosition();
-					int tagLength = 2+tag.getNerTag().text.length();
-					if(diff>=tagLength){
-						offset += Math.abs(diff-tagLength);
-					}else{
-						offset -= Math.abs(diff-tagLength);
+					int diff = tag.getEndPosition() - tag.getStartPosition();
+					int tagLength = 2 + tag.getNerTag().text.length();
+					if (diff >= tagLength) {
+						offset += Math.abs(diff - tagLength);
+					} else {
+						offset -= Math.abs(diff - tagLength);
 					}
 				}
 			}
 		}
 		return null;
 	}
+	
 	private Map<String, Set<Category>> generateNerDictionary(Map<String, Set<Category>> originalDictionary) {
 		Map<String, Set<Category>> nerDictinary = new LinkedHashMap<>();
 
@@ -452,13 +454,14 @@ public class RoleTagger extends UI {
 						String replaceText = new String(nativeRole);
 						int beginIndex = 0;
 						int endIndex = stringLength / roleCategory.size();
+						int step = stringLength / roleCategory.size();
 						for (final Category cat : roleCategory) {
 							startTag = "<" + cat.name() + ">";
 							endTag = "</" + cat.name() + ">";
 							final String substring = nativeRole.substring(beginIndex, endIndex);
 							replaceText = replaceText.replace(substring, startTag + substring + endTag);
 							beginIndex = endIndex;
-							endIndex = endIndex + endIndex;
+							endIndex = endIndex + step;
 							final int offset = nativeRole.length() - endIndex;
 							if (offset < stringLength / roleCategory.size()) {
 								endIndex += offset;
