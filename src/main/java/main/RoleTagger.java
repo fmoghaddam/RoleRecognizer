@@ -324,7 +324,6 @@ public class RoleTagger extends UI {
 
 			final Pattern pattern = Pattern.compile("(?im)" +regexPattern);
 			final Matcher matcher = pattern.matcher(resultNer);
-			final Set<String> visitedRoles = new HashSet<>();
 			while (matcher.find()) {
 				final String nerRole = matcher.group(0);
 				TagPosition tp = new TagPosition(nerRole,matcher.start(), matcher.end());
@@ -333,10 +332,6 @@ public class RoleTagger extends UI {
 				if (tagPositions.alreadyExist(tp)) {
 					continue;
 				}
-				if (visitedRoles.contains(nerRole)) {
-					continue;
-				}
-				visitedRoles.add(nerRole);
 
 				tagPositions.add(tp);
 				if (roleCategory.size() == 1) {
@@ -565,6 +560,7 @@ public class RoleTagger extends UI {
 	}
 
 	private String annotateText(String text, Map<String, Set<Category>> map) {
+		List<TagPosition> replacements = new ArrayList<>();
 		String result = new String(text);
 		for (final Entry<String, Set<Category>> roleEntity : map.entrySet()) {
 			final List<Category> roleCategory = new ArrayList<>(roleEntity.getValue());
@@ -579,23 +575,22 @@ public class RoleTagger extends UI {
 
 			final Pattern pattern = Pattern.compile("(?im)" + regexPattern);
 			final Matcher matcher = pattern.matcher(text);
-			final Set<String> visitedRoles = new HashSet<>();
 			while (matcher.find()) {
 				final String nativeRole = matcher.group(0);
 				final TagPosition tp = new TagPosition(nativeRole,matcher.start(), matcher.end());
 				if (tagPositions.alreadyExist(tp)) {
 					continue;
 				}
-				if (visitedRoles.contains(nativeRole)) {
-					continue;
-				}
-				visitedRoles.add(nativeRole);
-
 				tagPositions.add(tp);
 				if (roleCategory.size() == 1) {
+					
 					final String startTag = "<" + roleCategory.get(0).name() + ">";
 					final String endTag = "</" + roleCategory.get(0).name() + ">";
-					result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
+					replacements.add(new TagPosition(startTag+nativeRole+endTag, tp.getStartIndex(), tp.getEndIndex()));
+					
+//					final String startTag = "<" + roleCategory.get(0).name() + ">";
+//					final String endTag = "</" + roleCategory.get(0).name() + ">";
+//					result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
 				} else {
 					String startTag = "";
 					String endTag = "";
@@ -608,7 +603,7 @@ public class RoleTagger extends UI {
 							endTag = "</" + cat.name() + ">";
 							replaceText += startTag + nativeRole + endTag;
 						}
-						result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+						replacements.add(new TagPosition( replaceText, tp.getStartIndex(), tp.getEndIndex()));
 					} else {
 						String replaceText = new String(nativeRole);
 						int beginIndex = 0;
@@ -627,10 +622,26 @@ public class RoleTagger extends UI {
 							}
 
 						}
-						result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+						replacements.add(new TagPosition(replaceText, tp.getStartIndex(), tp.getEndIndex()));
 					}
 				}
 			}
+		}
+		replacements = sort(replacements, Order.ASC);
+		int offset = 0;
+		for (int i = 0; i < replacements.size(); i++) {
+			final TagPosition p = replacements.get(i);
+			result = result.substring(0, p.getStartIndex() + offset) + p.getTag()
+					+ result.substring(p.getEndIndex() + offset);
+			
+			final Pattern pattern = Pattern.compile("<[^>]*>");
+			final Matcher matcher = pattern.matcher(p.getTag());
+			int diff = 0;
+			while (matcher.find()) {
+				diff+=matcher.group(0).length();
+			}
+			
+			offset+=diff;
 		}
 		return result;
 	}

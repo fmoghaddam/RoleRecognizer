@@ -29,9 +29,10 @@ public class Test {
 		// final RoleListProvider provider = new RoleListProviderDummy();
 		final RoleListProvider provider = new RoleListProviderFileBased();
 		provider.loadRoles(DataSourceType.WIKIPEDIA);
-		//the President of Iran talked with CEO of Apple and king of Iran and 
-		System.out.println(annotateText("co-founder and ceo and",
-				provider.getData()));
+		System.out.println(annotateText("CEO CEO CEO CEO",
+				provider.getData())); 
+//		System.out.println(annotateTextWihtNER("CEO CEO CEO CEO",
+//				provider.getData()));
 	}
 
 	@SuppressWarnings("unused")
@@ -71,7 +72,7 @@ public class Test {
 
 			final Pattern pattern = Pattern.compile("(?im)" + regexPattern);
 			final Matcher matcher = pattern.matcher(resultNer);
-			final Set<String> visitedRoles = new HashSet<>();
+			//final Set<String> visitedRoles = new HashSet<>();
 			while (matcher.find()) {
 				final String nerRole = matcher.group(0);
 				TagPosition tp = new TagPosition(nerRole, matcher.start(), matcher.end());
@@ -80,10 +81,10 @@ public class Test {
 				if (tagPositions.alreadyExist(tp)) {
 					continue;
 				}
-				if (visitedRoles.contains(nerRole)) {
-					continue;
-				}
-				visitedRoles.add(nerRole);
+//				if (visitedRoles.contains(nerRole)) {
+//					continue;
+//				}
+//				visitedRoles.add(nerRole);
 
 				tagPositions.add(tp);
 				if (roleCategory.size() == 1) {
@@ -255,18 +256,16 @@ public class Test {
 					newSet.addAll(categories);
 					nerDictinary.put(nerTaggedResult, newSet);
 				}
-				// System.err.println(nerTaggedResult);
 			} catch (ClassCastException e) {
 				e.printStackTrace();
 			}
 		}
 
 		nerDictinary = MapUtil.sortByKeyDescendingNumberOfWords(nerDictinary);
-		// printFullStatistic(nerDictinary);
 		return nerDictinary;
 	}
-
 	private static String annotateText(String text, Map<String, Set<Category>> map) {
+		List<TagPosition> replacements = new ArrayList<>();
 		String result = new String(text);
 		for (final Entry<String, Set<Category>> roleEntity : map.entrySet()) {
 			final List<Category> roleCategory = new ArrayList<>(roleEntity.getValue());
@@ -281,23 +280,22 @@ public class Test {
 
 			final Pattern pattern = Pattern.compile("(?im)" + regexPattern);
 			final Matcher matcher = pattern.matcher(text);
-			final Set<String> visitedRoles = new HashSet<>();
 			while (matcher.find()) {
 				final String nativeRole = matcher.group(0);
 				final TagPosition tp = new TagPosition(nativeRole,matcher.start(), matcher.end());
 				if (tagPositions.alreadyExist(tp)) {
 					continue;
 				}
-				if (visitedRoles.contains(nativeRole)) {
-					continue;
-				}
-				visitedRoles.add(nativeRole);
-
 				tagPositions.add(tp);
 				if (roleCategory.size() == 1) {
+					
 					final String startTag = "<" + roleCategory.get(0).name() + ">";
 					final String endTag = "</" + roleCategory.get(0).name() + ">";
-					result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
+					replacements.add(new TagPosition(startTag+nativeRole+endTag, tp.getStartIndex(), tp.getEndIndex()));
+					
+//					final String startTag = "<" + roleCategory.get(0).name() + ">";
+//					final String endTag = "</" + roleCategory.get(0).name() + ">";
+//					result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
 				} else {
 					String startTag = "";
 					String endTag = "";
@@ -310,7 +308,7 @@ public class Test {
 							endTag = "</" + cat.name() + ">";
 							replaceText += startTag + nativeRole + endTag;
 						}
-						result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+						replacements.add(new TagPosition( replaceText, tp.getStartIndex(), tp.getEndIndex()));
 					} else {
 						String replaceText = new String(nativeRole);
 						int beginIndex = 0;
@@ -329,11 +327,28 @@ public class Test {
 							}
 
 						}
-						result = result.replaceAll("\\b" + nativeRole + "\\b", replaceText);
+						replacements.add(new TagPosition(replaceText, tp.getStartIndex(), tp.getEndIndex()));
 					}
 				}
 			}
 		}
+		replacements = sort(replacements, Order.ASC);
+		int offset = 0;
+		for (int i = 0; i < replacements.size(); i++) {
+			final TagPosition p = replacements.get(i);
+			result = result.substring(0, p.getStartIndex() + offset) + p.getTag()
+					+ result.substring(p.getEndIndex() + offset);
+			
+			final Pattern pattern = Pattern.compile("<[^>]*>");
+			final Matcher matcher = pattern.matcher(p.getTag());
+			int diff = 0;
+			while (matcher.find()) {
+				diff+=matcher.group(0).length();
+			}
+			
+			offset+=diff;
+		}
 		return result;
 	}
+
 }
