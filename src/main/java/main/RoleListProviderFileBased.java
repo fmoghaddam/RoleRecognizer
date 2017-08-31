@@ -28,6 +28,7 @@ public class RoleListProviderFileBased extends RoleListProvider {
 	 */
 	@Override
 	public void loadRoles(DataSourceType dataSourceType) {
+		roleMap.clear();
 		String dataSubFolder;
 		switch (dataSourceType) {
 		case WIKIPEDIA:

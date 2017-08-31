@@ -19,6 +19,7 @@ import com.byteowls.vaadin.chartjs.config.PieChartConfig;
 import com.byteowls.vaadin.chartjs.data.Dataset;
 import com.byteowls.vaadin.chartjs.data.PieDataset;
 import com.vaadin.annotations.Theme;
+import com.vaadin.server.Page;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Button;
@@ -90,21 +91,23 @@ public class RoleTagger extends UI {
 		final CheckBox selectWikidata = new CheckBox("Use Wikidata");
 		selectWikidata.setValue(false);
 		
+		final Notification notif = new Notification(
+			    "At least one data source should be seletced",
+			    "",
+			    Notification.Type.HUMANIZED_MESSAGE);
+		notif.setDelayMsec(3000);
+		
 		selectWikipedia.addValueChangeListener(event -> {
 			if(!selectWikipedia.getValue()&&!selectWikidata.getValue()){
-				Notification.show("At least one data source should be seletced",
-		                  "",
-		                  Notification.Type.HUMANIZED_MESSAGE);
 				selectWikipedia.setValue(true);
+				notif.show(Page.getCurrent());
 			}
 		});
 		
 		selectWikidata.addValueChangeListener(event -> {
 			if(!selectWikipedia.getValue()&&!selectWikidata.getValue()){
-				Notification.show("At least one data source should be seletced",
-		                  "",
-		                  Notification.Type.HUMANIZED_MESSAGE);
 				selectWikidata.setValue(true);
+				notif.show(Page.getCurrent());
 			}
 		});
 		
@@ -380,7 +383,6 @@ public class RoleTagger extends UI {
 					newSet.addAll(categories);
 					nerDictinary.put(nerTaggedResult, newSet);
 				}
-				//System.err.println(nerTaggedResult);
 			} catch (ClassCastException e) {
 				e.printStackTrace();
 			}
@@ -450,9 +452,17 @@ public class RoleTagger extends UI {
 	private String annotateText(String text, Map<String, Set<Category>> map) {
 		String result = new String(text);
 		for (final Entry<String, Set<Category>> roleEntity : map.entrySet()) {
-			final String role = roleEntity.getKey().toLowerCase();
 			final List<Category> roleCategory = new ArrayList<>(roleEntity.getValue());
-			final Pattern pattern = Pattern.compile("(?i)" + "\\b" + role + "\\b");
+			final String role = roleEntity.getKey().replaceAll("\\.", "\\\\.");
+			if (role.charAt(0) == '<' && role.charAt(role.length() - 1) == '>') {
+				continue;
+			}
+			String regexPattern = "(?im)";
+			regexPattern += "\\b";
+			regexPattern += role;
+			regexPattern += "\\b";
+
+			final Pattern pattern = Pattern.compile("(?im)" + regexPattern);
 			final Matcher matcher = pattern.matcher(text);
 			final Set<String> visitedRoles = new HashSet<>();
 			while (matcher.find()) {

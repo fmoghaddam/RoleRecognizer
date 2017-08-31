@@ -12,8 +12,8 @@ import model.Category;
 public class ColorUtil {
 	public static Map<Category, String> colorMap = new LinkedHashMap<>();
 
-	private static final String[] colors = new String[] { "lightgreen", "magenta", "yellow", "red", "lightblue", "cyan",
-			"orange", "pink", "gray", "green" };
+	private static final String[] colors = new String[] { "lightgreen",  "lightblue", "yellow", "orange","magenta","red", "cyan",
+			"pink", "gray", "green" };
 
 	public static void fill(Collection<Category> categories) {
 		final List<Category> list = new ArrayList<>(categories);
