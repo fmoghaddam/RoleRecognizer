@@ -52,3 +52,12 @@ task downloadFile(type: Download) {
     overwrite false
     onlyIfNewer true
 }
+
+task deployToTomcat(type: Copy,dependsOn: ':war') {
+    from war.archivePath
+    into "/home/fbm/Desktop/apache-tomcat-8.5.15/webapps"
+}
+
+task startTomcat(dependsOn: deployToTomcat, type: Exec) {
+     commandLine '/home/fbm/Desktop/apache-tomcat-8.5.15/bin/catalina.sh','run'
+}
