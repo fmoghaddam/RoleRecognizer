@@ -155,6 +155,15 @@ public class RoleTagger extends UI {
 		});
 
 		annotateButton.addClickListener(event -> {
+			if(textArea.getValue().equals(null) || textArea.getValue()==""){
+				final Notification notifi = new Notification(
+					    "Please enter some text first",
+					    "",
+					    Notification.Type.HUMANIZED_MESSAGE);
+				notifi.show(Page.getCurrent());
+				return;
+			}
+			
 			if(selectWikidata.getValue()&&selectWikipedia.getValue()){
 				provider.loadRoles(DataSourceType.ALL);
 			}else if(selectWikidata.getValue()&&!selectWikipedia.getValue()){
