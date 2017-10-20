@@ -188,12 +188,10 @@ public class RoleTagger extends UI {
 					String result = null;
 					String printResult = "";
 					Process p = Runtime.getRuntime().exec("python2 "+PYTHON_CLASSIFIER_LOCATION+" "+textArea.getValue());					
-					//Process p = Runtime.getRuntime().exec("python2 /home/fbm/Desktop/SERVER/mainTestForJava.py "+textArea.getValue());
 					BufferedReader stdInput = new BufferedReader(new 
 							InputStreamReader(p.getInputStream()));
 					BufferedReader stdError = new BufferedReader(new 
 							InputStreamReader(p.getErrorStream()));
-					// read the output from the command
 					System.out.println("Here is the standard output of the command:\n");
 					while ((result = stdInput.readLine()) != null) {
 						System.out.println(result);
