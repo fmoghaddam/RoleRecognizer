@@ -29,12 +29,17 @@ public class Test {
 		// final RoleListProvider provider = new RoleListProviderDummy();
 		final RoleListProvider provider = new RoleListProviderFileBased();
 		provider.loadRoles(DataSourceType.WIKIPEDIA);
+		final Map<String, Set<Category>> generatedNerDictionary = generateNerDictionary(provider.getData());
+		
+		System.err.println(generatedNerDictionary);
 		System.out.println(annotateText("CEO CEO CEO CEO",
 				provider.getData())); 
 //		System.out.println(annotateTextWihtNER("CEO CEO CEO CEO",
 //				provider.getData()));
 	}
 
+	
+	
 	@SuppressWarnings("unused")
 	private static Logger LOG = Logger.getLogger(RoleTagger.class);
 	private final static TagPositions tagPositions = new TagPositions();

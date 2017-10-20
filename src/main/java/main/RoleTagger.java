@@ -1,5 +1,8 @@
 package main;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -8,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,6 +37,7 @@ import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBox;
+import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
@@ -53,7 +58,7 @@ import util.NERTagger;
 @Theme("VaadinTest")
 public class RoleTagger extends UI {
 
-	private static final String VERIOSN = "1.5";
+	private static final String VERIOSN = "1.6";
 	private static final long serialVersionUID = 5924433731101343240L;
 	@SuppressWarnings("unused")
 	private static Logger LOG = Logger.getLogger(RoleTagger.class);
@@ -79,11 +84,11 @@ public class RoleTagger extends UI {
 		final ChartJs pieChart = new ChartJs();
 		pieChart.setVisible(false);
 		pieChart.setJsLoggingEnabled(true);
-		
+
 		final ChartJs barChart = new ChartJs();
 		barChart.setVisible(false);
 		barChart.setJsLoggingEnabled(true);
-		
+
 		final ChartJs polarChart = new ChartJs();
 		polarChart.setVisible(false);
 		polarChart.setJsLoggingEnabled(true);
@@ -92,49 +97,56 @@ public class RoleTagger extends UI {
 		buttomLayout.setSpacing(true);
 
 		final Button annotateButton = createButton();
+		
+		final Button generateSampleText = createSampleTextButton(textArea);
 
 		final CheckBox enableTaggedText = new CheckBox("Show Annotated Text");
 		enableTaggedText.setValue(false);
 
+		final CheckBox enableClassifier = new CheckBox("Machine Learning Classifier");
+		enableClassifier.setValue(false);
+
 		final CheckBox enableChart = new CheckBox("Show Frequency Chart");
 		enableChart.setValue(false);
-		
+
 		final CheckBox enableNER = new CheckBox("Use NER");
 		enableChart.setValue(false);
 
 		final CheckBox selectWikipedia = new CheckBox("Use Wikipedia");
 		selectWikipedia.setValue(true);
-		
+
 		final CheckBox selectWikidata = new CheckBox("Use Wikidata");
 		selectWikidata.setValue(false);
-		
+
 		final Notification notif = new Notification(
-			    "At least one data source should be seletced",
-			    "",
-			    Notification.Type.HUMANIZED_MESSAGE);
+				"At least one data source should be seletced",
+				"",
+				Notification.Type.HUMANIZED_MESSAGE);
 		notif.setDelayMsec(3000);
-		
+
 		selectWikipedia.addValueChangeListener(event -> {
 			if(!selectWikipedia.getValue()&&!selectWikidata.getValue()){
 				selectWikipedia.setValue(true);
 				notif.show(Page.getCurrent());
 			}
 		});
-		
+
 		selectWikidata.addValueChangeListener(event -> {
 			if(!selectWikipedia.getValue()&&!selectWikidata.getValue()){
 				selectWikidata.setValue(true);
 				notif.show(Page.getCurrent());
 			}
 		});
-		
+
 		buttomLayout.addComponent(annotateButton);
+		buttomLayout.addComponent(generateSampleText);
 		buttomLayout.addComponent(enableChart);
 		buttomLayout.addComponent(enableTaggedText);
-		buttomLayout.addComponent(enableNER);
+		buttomLayout.addComponent(enableNER);		
 		buttomLayout.addComponent(selectWikipedia);
 		buttomLayout.addComponent(selectWikidata);
-		
+		buttomLayout.addComponent(enableClassifier);
+
 		final Label annotatedResult = new Label("", ContentMode.TEXT);
 		annotatedResult.setVisible(false);
 
@@ -171,31 +183,67 @@ public class RoleTagger extends UI {
 			}else if(!selectWikidata.getValue()&&selectWikipedia.getValue()){
 				provider.loadRoles(DataSourceType.WIKIPEDIA);
 			}
-			if(enableNER.getValue()){
-				tagPositions.reset();
-				final String annotatedText = annotateTextWihtNER(textArea.getValue(), provider.getData());
-				colorfullResult.setValue(addColor(annotatedText));
-				annotatedResult.setValue(annotatedText);
-				legend.setVisible(true);
-				pieChart.configure(createPieChartConfiguration(annotatedText));
-				pieChart.refreshData();
-				barChart.configure(createBarChartConfiguration(annotatedText));
-				barChart.refreshData();
-				polarChart.configure(createPolarChartConfiguration(annotatedText));
-				polarChart.refreshData();
+			if(enableClassifier.getValue()) {
+				try {
+					String result = null;
+					String printResult = "";
+					Process p = Runtime.getRuntime().exec("python2 /home/farshad/Python_Classifier/mainTestForJava.py "+textArea.getValue());					
+					//Process p = Runtime.getRuntime().exec("python2 /home/fbm/Desktop/SERVER/mainTestForJava.py "+textArea.getValue());
+					BufferedReader stdInput = new BufferedReader(new 
+							InputStreamReader(p.getInputStream()));
+					BufferedReader stdError = new BufferedReader(new 
+							InputStreamReader(p.getErrorStream()));
+					// read the output from the command
+					System.out.println("Here is the standard output of the command:\n");
+					while ((result = stdInput.readLine()) != null) {
+						System.out.println(result);
+						printResult = result;
+					}
+					final Notification notification = new Notification(
+							printResult,
+							"",
+							Notification.Type.HUMANIZED_MESSAGE);
+					notification.setDelayMsec(3000);
+					notification.show(Page.getCurrent());
+					String s = null;
+					// read any errors from the attempted command
+					System.out.println("Here is the standard error of the command (if any):\n");
+					while ((s = stdError.readLine()) != null) {
+						System.out.println(s);
+					}
+					
+					
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
-			else{
-				tagPositions.reset();
-				final String annotatedText = annotateText(textArea.getValue(), provider.getData());
-				colorfullResult.setValue(addColor(annotatedText));
-				annotatedResult.setValue(annotatedText);
-				legend.setVisible(true);
-				pieChart.configure(createPieChartConfiguration(annotatedText));
-				pieChart.refreshData();
-				barChart.configure(createBarChartConfiguration(annotatedText));
-				barChart.refreshData();
-				polarChart.configure(createPolarChartConfiguration(annotatedText));
-				polarChart.refreshData();
+			else {
+				if(enableNER.getValue()){
+					tagPositions.reset();
+					final String annotatedText = annotateTextWihtNER(textArea.getValue(), provider.getData());
+					colorfullResult.setValue(addColor(annotatedText));
+					annotatedResult.setValue(annotatedText);
+					legend.setVisible(true);
+					pieChart.configure(createPieChartConfiguration(annotatedText));
+					pieChart.refreshData();
+					barChart.configure(createBarChartConfiguration(annotatedText));
+					barChart.refreshData();
+					polarChart.configure(createPolarChartConfiguration(annotatedText));
+					polarChart.refreshData();
+				}			
+				else{
+					tagPositions.reset();
+					final String annotatedText = annotateText(textArea.getValue(), provider.getData());
+					colorfullResult.setValue(addColor(annotatedText));
+					annotatedResult.setValue(annotatedText);
+					legend.setVisible(true);
+					pieChart.configure(createPieChartConfiguration(annotatedText));
+					pieChart.refreshData();
+					barChart.configure(createBarChartConfiguration(annotatedText));
+					barChart.refreshData();
+					polarChart.configure(createPolarChartConfiguration(annotatedText));
+					polarChart.refreshData();
+				}
 			}
 		});
 
@@ -206,14 +254,14 @@ public class RoleTagger extends UI {
 		mainLayout.addComponent(colorfullResult);
 		mainLayout.addComponent(legend);
 		mainLayout.addComponent(new Label("<Strong>Frequency Chart:</Strong>", ContentMode.HTML));
-		
+
 		HorizontalLayout chartsLayout = new HorizontalLayout();
 		chartsLayout.addComponent(pieChart);
 		chartsLayout.addComponent(barChart);
 		chartsLayout.addComponent(polarChart);
-		
+
 		barChart.setHeight(300, Unit.PIXELS);
-		
+
 		chartsLayout.setSpacing(true);
 		chartsLayout.setMargin(true);
 		mainLayout.addComponent(chartsLayout);
@@ -222,83 +270,97 @@ public class RoleTagger extends UI {
 		mainLayout.addComponent(annotatedResult);
 	}
 
+	private Button createSampleTextButton(TextArea textArea) {
+		final Button run = new Button("Sample Sentense");
+		final List<String> sampleSentence = Arrays.asList("The Government of Barbados (GoB), is headed by the monarch, Queen Elizabeth II as Head of State.",
+				"King Edward VII oversaw a partial redecoration in a \"Belle Époque\" cream and gold colour scheme.",
+				"From 1993 until 2012, the President of the Czech Republic was selected by a joint session of the parliament for a five-year term, with no more than two consecutive terms (2x Václav Havel, 2x Václav Klaus).",
+				"Simón Bolívar became the first President of Colombia, and Francisco de Paula Santander was made Vice President.");
+		run.addClickListener(event -> {
+			int randomNum = ThreadLocalRandom.current().nextInt(0, sampleSentence.size());
+			textArea.clear();
+			textArea.setValue(sampleSentence.get(randomNum));
+		});
+		return run;
+	}
+
 	private ChartConfig createPolarChartConfiguration(String annotatedText) {
 		final PolarAreaChartConfig config = new PolarAreaChartConfig();
 		final Map<String, Double> statistic = createStatistic(annotatedText);
-        config
-            .data()
-                .labels(statistic.keySet().stream().toArray(String[]::new))
-                .addDataset(new PolarAreaDataset().label("My dataset").backgroundColor())
-                .and();
+		config
+		.data()
+		.labels(statistic.keySet().stream().toArray(String[]::new))
+		.addDataset(new PolarAreaDataset().label("My dataset").backgroundColor())
+		.and();
 
-        config.
-            options()
-                .responsive(true)
-                .title()
-                    .display(true)
-                    .text("Polar Chart")
-                    .and()
-                .scale(new RadialLinearScale().ticks().beginAtZero(true).and().reverse(false))
-                .animation()
-                    .animateScale(true)
-                    .animateRotate(false)
-                    .and()
-               .done();
+		config.
+		options()
+		.responsive(true)
+		.title()
+		.display(true)
+		.text("Polar Chart")
+		.and()
+		.scale(new RadialLinearScale().ticks().beginAtZero(true).and().reverse(false))
+		.animation()
+		.animateScale(true)
+		.animateRotate(false)
+		.and()
+		.done();
 
-        for (Dataset<?, ?> ds : config.data().getDatasets()) {
-            final PolarAreaDataset lds = (PolarAreaDataset) ds;
-            final List<Double> data = new ArrayList<>();
-            List<String> colors = new ArrayList<>();
-            for (Entry<String, Double> entry : statistic.entrySet()) {
-    			data.add(entry.getValue());
-    			colors.add(ColorUtil.colorMap.get(Category.valueOf(entry.getKey())));
-    		}
-            lds.backgroundColor(colors.toArray(new String[colors.size()]));
-            
-            lds.dataAsList(data);
-        }
-        return config;
+		for (Dataset<?, ?> ds : config.data().getDatasets()) {
+			final PolarAreaDataset lds = (PolarAreaDataset) ds;
+			final List<Double> data = new ArrayList<>();
+			List<String> colors = new ArrayList<>();
+			for (Entry<String, Double> entry : statistic.entrySet()) {
+				data.add(entry.getValue());
+				colors.add(ColorUtil.colorMap.get(Category.valueOf(entry.getKey())));
+			}
+			lds.backgroundColor(colors.toArray(new String[colors.size()]));
+
+			lds.dataAsList(data);
+		}
+		return config;
 	}
 
 	private BarChartConfig createBarChartConfiguration(String annotatedText) {
 		final BarChartConfig barConfig = new BarChartConfig();
 		final Map<String, Double> statistic = createStatistic(annotatedText);		
-        barConfig.
-            data()
-                .labels(statistic.keySet().stream().toArray(String[]::new))
-                .addDataset(
-                        new BarDataset().backgroundColor().label("").yAxisID("y-axis-1"))                
-                .and();
-        barConfig.
-            options()
-                .responsive(true)
-                .hover()
-                    .mode(InteractionMode.INDEX)
-                    .intersect(true)
-                    .animationDuration(400)
-                    .and()
-                .title()
-                    .display(true)
-                    .text("Bar Chart")
-                    .and()
-                .scales()
-                    .add(Axis.Y, new LinearScale().display(true).position(Position.LEFT).id("y-axis-1"))
-                    .and()
-               .done();
-        
-        for (Dataset<?, ?> ds : barConfig.data().getDatasets()) {
-        	final BarDataset lds = (BarDataset) ds;
-            final List<Double> data = new ArrayList<>();
-            List<String> colors = new ArrayList<>();
-            for (Entry<String, Double> entry : statistic.entrySet()) {
-    			data.add(entry.getValue());
-    			colors.add(ColorUtil.colorMap.get(Category.valueOf(entry.getKey())));
-    		}
-            lds.backgroundColor(colors.toArray(new String[colors.size()]));
-            lds.dataAsList(data);
-        }
+		barConfig.
+		data()
+		.labels(statistic.keySet().stream().toArray(String[]::new))
+		.addDataset(
+				new BarDataset().backgroundColor().label("").yAxisID("y-axis-1"))                
+		.and();
+		barConfig.
+		options()
+		.responsive(true)
+		.hover()
+		.mode(InteractionMode.INDEX)
+		.intersect(true)
+		.animationDuration(400)
+		.and()
+		.title()
+		.display(true)
+		.text("Bar Chart")
+		.and()
+		.scales()
+		.add(Axis.Y, new LinearScale().display(true).position(Position.LEFT).id("y-axis-1"))
+		.and()
+		.done();
 
-        return barConfig;
+		for (Dataset<?, ?> ds : barConfig.data().getDatasets()) {
+			final BarDataset lds = (BarDataset) ds;
+			final List<Double> data = new ArrayList<>();
+			List<String> colors = new ArrayList<>();
+			for (Entry<String, Double> entry : statistic.entrySet()) {
+				data.add(entry.getValue());
+				colors.add(ColorUtil.colorMap.get(Category.valueOf(entry.getKey())));
+			}
+			lds.backgroundColor(colors.toArray(new String[colors.size()]));
+			lds.dataAsList(data);
+		}
+
+		return barConfig;
 	}
 
 	private String annotateTextWihtNER(String text, Map<String, Set<Category>> map) {
@@ -388,24 +450,24 @@ public class RoleTagger extends UI {
 		for (int i = 0; i < replacements.size(); i++) {
 			final TagPosition p = replacements.get(i);
 			result = result.substring(0, p.getStartIndex() + offset) + p.getTag()
-					+ result.substring(p.getEndIndex() + offset);
-			
+			+ result.substring(p.getEndIndex() + offset);
+
 			final Pattern pattern = Pattern.compile("<[^>]*>");
 			final Matcher matcher = pattern.matcher(p.getTag());
 			int diff = 0;
 			while (matcher.find()) {
 				diff+=matcher.group(0).length();
 			}
-			
+
 			offset+=diff;
 		}
 		return result;
 	}
 
 	private static List<TagPosition> sort(List<TagPosition> replacements, Order asc) {
-        TagPosition[] array = new TagPosition[replacements.size()];
+		TagPosition[] array = new TagPosition[replacements.size()];
 		array = replacements.toArray(array);
-		
+
 		for(int i=0;i<replacements.size();i++) {
 			for(int j=i+1;j<replacements.size();j++) {
 				switch (asc) {
@@ -460,14 +522,14 @@ public class RoleTagger extends UI {
 				if ((entry.getKey() - offset) == candicatePosition.getStartIndex() + staticOffset) {
 					final int start = entry.getKey() - staticOffset;
 
-					 final NerTag tag = entry.getValue();
-					 int diff = tag.getEndPosition()-tag.getStartPosition();
-					 int tagLength = 2+tag.getNerTag().text.length();
-					 if(diff>=tagLength){
-						 offset += Math.abs(diff-tagLength);
-					 }else{
-						 offset -= Math.abs(diff-tagLength);
-					 }
+					final NerTag tag = entry.getValue();
+					int diff = tag.getEndPosition()-tag.getStartPosition();
+					int tagLength = 2+tag.getNerTag().text.length();
+					if(diff>=tagLength){
+						offset += Math.abs(diff-tagLength);
+					}else{
+						offset -= Math.abs(diff-tagLength);
+					}
 
 					final TagPosition result = new TagPosition(candicatePosition.getTag(), start,
 							candicatePosition.getEndIndex()+ offset);
@@ -486,7 +548,7 @@ public class RoleTagger extends UI {
 		}
 		return null;
 	}
-	
+
 	private Map<String, Set<Category>> generateNerDictionary(Map<String, Set<Category>> originalDictionary) {
 		Map<String, Set<Category>> nerDictinary = new LinkedHashMap<>();
 
@@ -507,7 +569,7 @@ public class RoleTagger extends UI {
 				e.printStackTrace();
 			}
 		}
-		
+
 		nerDictinary = MapUtil.sortByKeyDescendingNumberOfWords(nerDictinary);
 		return nerDictinary;
 	}
@@ -516,10 +578,10 @@ public class RoleTagger extends UI {
 		final PieChartConfig config = new PieChartConfig();
 		final Map<String, Double> statistic = createStatistic(annotatedText);
 		config.data().labels(statistic.keySet().stream().toArray(String[]::new))
-				.addDataset(new PieDataset().label("Dataset 1")).and();
+		.addDataset(new PieDataset().label("Dataset 1")).and();
 
 		config.options().responsive(true).title().display(true).text("Pie Chart").and().animation()
-				.animateScale(true).animateRotate(true).and().done();
+		.animateScale(true).animateRotate(true).and().done();
 
 		for (final Dataset<?, ?> ds : config.data().getDatasets()) {
 			PieDataset lds = (PieDataset) ds;
@@ -561,7 +623,7 @@ public class RoleTagger extends UI {
 		final StringBuilder resultText = new StringBuilder();
 		for (Entry<Category, String> entry : ColorUtil.colorMap.entrySet()) {
 			resultText.append("<mark" + entry.getValue() + ">" + entry.getKey() + "</mark" + entry.getValue() + ">")
-					.append("<br>");
+			.append("<br>");
 		}
 		result.setValue(resultText.toString());
 		return result;
@@ -592,14 +654,14 @@ public class RoleTagger extends UI {
 				}
 				tagPositions.add(tp);
 				if (roleCategory.size() == 1) {
-					
+
 					final String startTag = "<" + roleCategory.get(0).name() + ">";
 					final String endTag = "</" + roleCategory.get(0).name() + ">";
 					replacements.add(new TagPosition(startTag+nativeRole+endTag, tp.getStartIndex(), tp.getEndIndex()));
-					
-//					final String startTag = "<" + roleCategory.get(0).name() + ">";
-//					final String endTag = "</" + roleCategory.get(0).name() + ">";
-//					result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
+
+					//					final String startTag = "<" + roleCategory.get(0).name() + ">";
+					//					final String endTag = "</" + roleCategory.get(0).name() + ">";
+					//					result = result.replaceAll("\\b" + nativeRole + "\\b", startTag + nativeRole + endTag);
 				} else {
 					String startTag = "";
 					String endTag = "";
@@ -641,15 +703,15 @@ public class RoleTagger extends UI {
 		for (int i = 0; i < replacements.size(); i++) {
 			final TagPosition p = replacements.get(i);
 			result = result.substring(0, p.getStartIndex() + offset) + p.getTag()
-					+ result.substring(p.getEndIndex() + offset);
-			
+			+ result.substring(p.getEndIndex() + offset);
+
 			final Pattern pattern = Pattern.compile("<[^>]*>");
 			final Matcher matcher = pattern.matcher(p.getTag());
 			int diff = 0;
 			while (matcher.find()) {
 				diff+=matcher.group(0).length();
 			}
-			
+
 			offset+=diff;
 		}
 		return result;

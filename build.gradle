@@ -1,4 +1,8 @@
 plugins {
+    id 'org.hidetake.ssh' version '2.8.0'
+}
+
+plugins {
   id 'fi.jasoft.plugin.vaadin' version '1.0'
 }
 
@@ -25,6 +29,8 @@ dependencies {
     compile group: 'log4j', name: 'log4j', version: '1.2.17'
     testCompile 'junit:junit:4.12'
 	compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', version: '3.7.0'
+	compile "org.deeplearning4j:deeplearning4j-core:0.8.0"
+    compile "org.nd4j:nd4j-native-platform:0.8.0"
 }
 
 task wrapper(type: Wrapper) {
@@ -55,9 +61,33 @@ task downloadFile(type: Download) {
 
 task deployToTomcat(type: Copy,dependsOn: ':war') {
     from war.archivePath
-    into "/home/fbm/Desktop/apache-tomcat-8.5.15/webapps"
+    into "/home/fbm/Downloads/apache-tomcat-8.5.20/webapps"
 }
 
 task startTomcat(dependsOn: deployToTomcat, type: Exec) {
-     commandLine '/home/fbm/Desktop/apache-tomcat-8.5.15/bin/catalina.sh','run'
+     commandLine '/home/fbm/Downloads/apache-tomcat-8.5.20/bin/catalina.sh','run'
+}
+
+ssh.settings {
+    dryRun = project.hasProperty('dryRun')
+}
+
+remotes {
+    server {
+        host = '10.10.4.10'
+        user = 'farshad'
+        identity = file("${System.properties['user.home']}/.ssh/id_rsa")
+    }
+}
+
+task deployWarToServer(dependsOn: war) << {
+    ssh.run {
+        session(remotes.server) {
+        	//execute 'pkill -9 -f tomcat'
+         	execute 'rm -rf /home/farshad/apache-tomcat-8.5.15/webapps/RoleRecognizer'
+         	execute 'rm -rf /home/farshad/apache-tomcat-8.5.15/webapps/RoleRecognizer.war'         	         
+            put from: './build/libs/RoleRecognizer.war', into: '/home/farshad/apache-tomcat-8.5.15/webapps'            
+            execute 'cd /home/farshad/apache-tomcat-8.5.15/bin && ./catalina.sh run'                        
+        }
+    }
 }
