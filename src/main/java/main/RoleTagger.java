@@ -37,7 +37,6 @@ import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBox;
-import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
@@ -58,6 +57,7 @@ import util.NERTagger;
 @Theme("VaadinTest")
 public class RoleTagger extends UI {
 
+	private static final String PYTHON_CLASSIFIER_LOCATION = "/home/farshad/Python_Classifier/mainTestForJava.py";
 	private static final String VERIOSN = "1.6";
 	private static final long serialVersionUID = 5924433731101343240L;
 	@SuppressWarnings("unused")
@@ -187,7 +187,7 @@ public class RoleTagger extends UI {
 				try {
 					String result = null;
 					String printResult = "";
-					Process p = Runtime.getRuntime().exec("python2 /home/farshad/Python_Classifier/mainTestForJava.py "+textArea.getValue());					
+					Process p = Runtime.getRuntime().exec("python2 "+PYTHON_CLASSIFIER_LOCATION+" "+textArea.getValue());					
 					//Process p = Runtime.getRuntime().exec("python2 /home/fbm/Desktop/SERVER/mainTestForJava.py "+textArea.getValue());
 					BufferedReader stdInput = new BufferedReader(new 
 							InputStreamReader(p.getInputStream()));
