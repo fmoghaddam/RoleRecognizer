@@ -13,7 +13,7 @@ public class ColorUtil {
 	public static Map<Category, String> colorMap = new LinkedHashMap<>();
 
 	private static final String[] colors = new String[] { "lightgreen",  "lightblue", "yellow", "orange","magenta","red", "cyan",
-			"pink", "gray", "green" };
+			 "gray","pink", "green" };
 
 	public static void fill(Collection<Category> categories) {
 		final List<Category> list = new ArrayList<>(categories);
@@ -21,6 +21,15 @@ public class ColorUtil {
 		int i = 0;
 		for (final Category cat : list) {
 			colorMap.put(cat, colors[i++]);
+		}
+	}
+	
+	public static void fillExtra(Collection<Category> categories) {
+		final List<Category> list = new ArrayList<>(categories);
+		Collections.sort(list);
+		int i = colors.length-1;
+		for (final Category cat : list) {
+			colorMap.put(cat, colors[i--]);
 		}
 	}
 }

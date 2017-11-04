@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -68,5 +69,6 @@ public class RoleListProviderFileBased extends RoleListProvider {
 		}
 		sortBasedOnLenghth(Order.DESC);
 		ColorUtil.fill(roleMap.values().stream().flatMap(p -> p.stream()).distinct().collect(Collectors.toList()));
+		ColorUtil.fillExtra(Arrays.asList(Category.ROLE,Category.NO_ROLE));
 	}
 }

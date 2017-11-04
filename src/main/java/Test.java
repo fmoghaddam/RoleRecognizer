@@ -20,6 +20,7 @@ import model.NerTag;
 import model.Order;
 import model.TagPosition;
 import model.TagPositions;
+import util.CustomNERTagger;
 import util.MapUtil;
 import util.NERTagger;
 
@@ -27,18 +28,35 @@ public class Test {
 
 	public static void main(String[] args) {
 		// final RoleListProvider provider = new RoleListProviderDummy();
-		final RoleListProvider provider = new RoleListProviderFileBased();
-		provider.loadRoles(DataSourceType.WIKIPEDIA);
-		final Map<String, Set<Category>> generatedNerDictionary = generateNerDictionary(provider.getData());
+//		final RoleListProvider provider = new RoleListProviderFileBased();
+//		provider.loadRoles(DataSourceType.WIKIPEDIA);
+//		final Map<String, Set<Category>> generatedNerDictionary = generateNerDictionary(provider.getData());
 		
-		System.err.println(generatedNerDictionary);
-		System.out.println(annotateText("CEO CEO CEO CEO",
-				provider.getData())); 
+//		System.err.println(generatedNerDictionary);
+//		System.out.println(annotateText("CEO CEO CEO CEO",
+//				provider.getData())); 
 //		System.out.println(annotateTextWihtNER("CEO CEO CEO CEO",
 //				provider.getData()));
+		
+		//System.err.println(CustomNERTagger.runTaggerString("Mr. Pope bought a house."));
+		System.err.println(annotateTextWihtCustomeNER("King of England visited Pope Francis to play chess and use his king."));
 	}
 
 	
+	private static String annotateTextWihtCustomeNER(String text) {
+		StringBuilder result = new StringBuilder(text);
+		final Map<Integer, NerTag> nerXmlParser = CustomNERTagger.nerXmlParser(CustomNERTagger.runTaggerXML(text));
+		int offset = 0;
+		for(Entry<Integer, NerTag> e:nerXmlParser.entrySet()) {
+			final int start = e.getValue().getStartPosition();
+			final int end = e.getValue().getEndPosition();
+			
+			String replace = "<"+e.getValue().getNerTag()+">" +result.substring(start+offset, end+offset) + "<"+e.getValue().getNerTag()+">" ;
+			result.replace(start+offset, end+offset, replace);
+			offset+=e.getValue().getNerTag().text.length()*2 + 4;
+		}
+		return result.toString();
+	}
 	
 	@SuppressWarnings("unused")
 	private static Logger LOG = Logger.getLogger(RoleTagger.class);

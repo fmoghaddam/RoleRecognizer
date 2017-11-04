@@ -51,6 +51,7 @@ import model.Order;
 import model.TagPosition;
 import model.TagPositions;
 import util.ColorUtil;
+import util.CustomNERTagger;
 import util.MapUtil;
 import util.NERTagger;
 
@@ -75,7 +76,6 @@ public class RoleTagger extends UI {
 		mainLayout.setMargin(true);
 		setContent(mainLayout);
 
-		//final RoleListProvider provider = new RoleListProviderDummy();
 		final RoleListProvider provider = new RoleListProviderFileBased();
 		provider.loadRoles(DataSourceType.WIKIPEDIA);
 
@@ -110,7 +110,10 @@ public class RoleTagger extends UI {
 		enableChart.setValue(false);
 
 		final CheckBox enableNER = new CheckBox("Use NER");
-		enableChart.setValue(false);
+		enableNER.setValue(false);
+		
+		final CheckBox enableCustomeNER = new CheckBox("Use Custome NER");
+		enableCustomeNER.setValue(false);
 
 		final CheckBox selectWikipedia = new CheckBox("Use Wikipedia");
 		selectWikipedia.setValue(true);
@@ -143,6 +146,7 @@ public class RoleTagger extends UI {
 		buttomLayout.addComponent(enableChart);
 		buttomLayout.addComponent(enableTaggedText);
 		buttomLayout.addComponent(enableNER);		
+		buttomLayout.addComponent(enableCustomeNER);		
 		buttomLayout.addComponent(selectWikipedia);
 		buttomLayout.addComponent(selectWikidata);
 		buttomLayout.addComponent(enableClassifier);
@@ -156,6 +160,7 @@ public class RoleTagger extends UI {
 		final Label colorfullResult = new Label("", ContentMode.HTML);
 		final Label legend = createColorIndicator();
 		legend.setVisible(false);
+		
 		enableTaggedText.addValueChangeListener(event -> {
 			annotatedResult.setVisible(enableTaggedText.getValue());
 		});
@@ -183,6 +188,11 @@ public class RoleTagger extends UI {
 			}else if(!selectWikidata.getValue()&&selectWikipedia.getValue()){
 				provider.loadRoles(DataSourceType.WIKIPEDIA);
 			}
+			/**
+			 * Using machine learning classifier
+			 * By using it, we will just get positive or negative as output
+			 * So no tagging
+			 */
 			if(enableClassifier.getValue()) {
 				try {
 					String result = null;
@@ -219,7 +229,7 @@ public class RoleTagger extends UI {
 				if(enableNER.getValue()){
 					tagPositions.reset();
 					final String annotatedText = annotateTextWihtNER(textArea.getValue(), provider.getData());
-					colorfullResult.setValue(addColor(annotatedText));
+					colorfullResult.setValue(addColor(annotatedText));					
 					annotatedResult.setValue(annotatedText);
 					legend.setVisible(true);
 					pieChart.configure(createPieChartConfiguration(annotatedText));
@@ -228,7 +238,20 @@ public class RoleTagger extends UI {
 					barChart.refreshData();
 					polarChart.configure(createPolarChartConfiguration(annotatedText));
 					polarChart.refreshData();
-				}			
+				}	
+				else if(enableCustomeNER.getValue()) {
+					tagPositions.reset();
+					final String annotatedText = annotateTextWihtCustomeNER(textArea.getValue());
+					colorfullResult.setValue(addColor(annotatedText));					
+					annotatedResult.setValue(annotatedText);
+					legend.setVisible(true);
+					pieChart.configure(createPieChartConfiguration(annotatedText));
+					pieChart.refreshData();
+					barChart.configure(createBarChartConfiguration(annotatedText));
+					barChart.refreshData();
+					polarChart.configure(createPolarChartConfiguration(annotatedText));
+					polarChart.refreshData();
+				}
 				else{
 					tagPositions.reset();
 					final String annotatedText = annotateText(textArea.getValue(), provider.getData());
@@ -266,6 +289,21 @@ public class RoleTagger extends UI {
 		mainLayout.addComponent(new Label("<hr />", ContentMode.HTML));
 		mainLayout.addComponent(new Label("<Strong>Annotated Text:</Strong>", ContentMode.HTML));
 		mainLayout.addComponent(annotatedResult);
+	}
+
+	private String annotateTextWihtCustomeNER(String text) {
+		StringBuilder result = new StringBuilder(text);
+		final Map<Integer, NerTag> nerXmlParser = CustomNERTagger.nerXmlParser(CustomNERTagger.runTaggerXML(text));
+		int offset = 0;
+		for(Entry<Integer, NerTag> e:nerXmlParser.entrySet()) {
+			final int start = e.getValue().getStartPosition();
+			final int end = e.getValue().getEndPosition();
+			
+			String replace = "<"+e.getValue().getNerTag()+">" +result.substring(start+offset, end+offset) + "</"+e.getValue().getNerTag()+">" ;
+			result.replace(start+offset, end+offset, replace);
+			offset+=e.getValue().getNerTag().text.length()*2 + 5;
+		}
+		return result.toString();
 	}
 
 	private Button createSampleTextButton(TextArea textArea) {

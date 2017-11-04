@@ -4,7 +4,9 @@ public enum Category {
 	PRESIDENT_TAG("president"),
 	POPE_TAG("pope"), 
 	KING_TAG("king"), 
-	CEO_TAG("ceo");
+	CEO_TAG("ceo"),
+	NO_ROLE(""),
+	ROLE("");
 	//TOPIC_TAG ("topic");
 
 	private String text;
